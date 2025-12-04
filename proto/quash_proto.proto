@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package quash_proto;
 
-option go_package = "github.com/mddfaisal/quash_proto";
+option go_package = "github.com/mddfaisal/quash/proto";
 
 message SetKVRequest {
     string key = 1;

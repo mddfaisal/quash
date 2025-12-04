@@ -26,9 +26,9 @@ var (
 	queues = map[string]*queue.Queue{}
 )
 
-func init() {
-	go garbageCollection()
-}
+// func init() {
+// 	go garbageCollection()
+// }
 
 type Server struct {
 	pb.QuashServiceServer

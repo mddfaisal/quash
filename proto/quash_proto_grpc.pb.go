@@ -4,7 +4,7 @@
 // - protoc             v3.19.6
 // source: quash_proto.proto
 
-package quash_proto
+package proto
 
 import (
 	context "context"

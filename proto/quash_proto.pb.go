@@ -4,7 +4,7 @@
 // 	protoc        v3.19.6
 // source: quash_proto.proto
 
-package quash_proto
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -888,7 +888,7 @@ const file_quash_proto_proto_rawDesc = "" +
 	"\tPushQueue\x12!.quash_proto.PushIntoQueueRequest\x1a\".quash_proto.PushIntoQueueResponse\x12Q\n" +
 	"\bPopQueue\x12 .quash_proto.PopFromQueueRequest\x1a!.quash_proto.PopFromQueueResponse0\x01\x12T\n" +
 	"\x0eQueryQueueList\x12\".quash_proto.QueryQueueListRequest\x1a\x1e.quash_proto.QueueListResponse\x12\\\n" +
-	"\x10QueryQueueMetric\x12$.quash_proto.QueryQueueMetricRequest\x1a .quash_proto.QueueMetricResponse0\x01B\"Z github.com/mddfaisal/quash_protob\x06proto3"
+	"\x10QueryQueueMetric\x12$.quash_proto.QueryQueueMetricRequest\x1a .quash_proto.QueueMetricResponse0\x01B\"Z github.com/mddfaisal/quash/protob\x06proto3"
 
 var (
 	file_quash_proto_proto_rawDescOnce sync.Once
