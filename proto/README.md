@@ -1,0 +1,1 @@
+### protoc -I. --go_out=. --go_opt=module=github.com/mddfaisal/quash_proto --go-grpc_out=. --go-grpc_opt=module=github.com/mddfaisal/quash_proto quash_proto.proto
