@@ -12,6 +12,7 @@ import (
 const addr = "0.0.0.0:6300"
 
 func Serve() {
+	go server.GarbageCollection()
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)

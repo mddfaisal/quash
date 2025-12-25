@@ -26,10 +26,6 @@ var (
 	queues = map[string]*queue.Queue{}
 )
 
-// func init() {
-// 	go garbageCollection()
-// }
-
 type Server struct {
 	pb.QuashServiceServer
 }
@@ -116,7 +112,7 @@ func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.Ser
 	}
 }
 
-func garbageCollection() {
+func GarbageCollection() {
 	for {
 		for k, v := range kvMap {
 			now := time.Now()
