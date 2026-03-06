@@ -18,7 +18,9 @@ func Serve() {
 		panic(err)
 	}
 	srv := grpc.NewServer()
-	pb.RegisterQuashServiceServer(srv, &server.Server{})
+	quashSrv := &server.Server{}
+	go quashSrv.ManageMemory()
+	pb.RegisterQuashServiceServer(srv, quashSrv)
 	if err := srv.Serve(lis); err != nil {
 		panic(err)
 	}

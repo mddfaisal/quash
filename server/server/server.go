@@ -6,12 +6,19 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"runtime"
 	"sync"
 	"time"
 
 	pb "github.com/mddfaisal/quash/proto"
 	"github.com/mddfaisal/quash/server/queue"
 	grpc "google.golang.org/grpc"
+)
+
+var (
+	bytes_in_gb uint64 = 1073741824
+	kvDump := 
+	queueDump := 
 )
 
 type kvValue struct {
@@ -112,14 +119,36 @@ func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.Ser
 	}
 }
 
+func (s *Server) ManageMemory() {
+	for {
+		lock.Lock()
+		heapAlloc := heapMemoryAlloc()
+		lock.Unlock()
+		fmt.Println(heapAlloc)
+		if heapAlloc >= bytes_in_gb {
+			// dump data
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func heapMemoryAlloc() uint64 {
+	var m runtime.MemStats
+	runtime.GC()
+	runtime.ReadMemStats(&m)
+	return m.HeapAlloc
+}
+
 func GarbageCollection() {
 	for {
+		lock.Lock()
 		for k, v := range kvMap {
 			now := time.Now()
 			if now.After(v.initTime.Add(v.timeOut)) {
 				delete(kvMap, k)
 			}
 		}
+		lock.Unlock()
 		time.Sleep(1 * time.Second)
 	}
 }
