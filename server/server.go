@@ -12,14 +12,13 @@ import (
 const addr = "0.0.0.0:6300"
 
 func Serve() {
-	go server.GarbageCollection()
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)
 	}
 	srv := grpc.NewServer()
 	quashSrv := &server.Server{}
-	go quashSrv.ManageMemory()
+	quashSrv.Init()
 	pb.RegisterQuashServiceServer(srv, quashSrv)
 	if err := srv.Serve(lis); err != nil {
 		panic(err)

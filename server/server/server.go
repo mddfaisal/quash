@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -16,9 +18,8 @@ import (
 )
 
 var (
-	bytes_in_gb uint64 = 1073741824
-	kvDump := 
-	queueDump := 
+	bytes_in_gb       uint64 = 1073741824
+	kvDump, queueDump *os.File
 )
 
 type kvValue struct {
@@ -35,6 +36,20 @@ var (
 
 type Server struct {
 	pb.QuashServiceServer
+}
+
+func (s *Server) Init() {
+	go s.ManageMemory()
+	go GarbageCollection()
+	var err error
+	kvDump, err = os.Create(".kv_dump")
+	if err != nil {
+		panic(err)
+	}
+	queueDump, err = os.Create(".queue_dump")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVResponse, error) {
@@ -54,15 +69,34 @@ func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVRespo
 
 func (s *Server) GetKV(ctv context.Context, kv *pb.GetKVRequest) (*pb.GetKVResponse, error) {
 	log.Printf("GetKV, key=%v\n", kv.Key)
+	now := time.Now()
 	lock.Lock()
 	val, ok := kvMap[kv.Key]
 	if ok {
-		now := time.Now()
 		if now.After(val.initTime.Add(val.timeOut)) {
 			delete(kvMap, kv.Key)
 			return nil, errors.New("key does't exists")
 		}
 		return &pb.GetKVResponse{Value: val.value}, nil
+	} else {
+		var fsKvMap map[string]kvValue
+		var fsKvMapBytes []byte
+		_, err := kvDump.Read(fsKvMapBytes)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(fsKvMapBytes, &fsKvMap)
+		if err != nil {
+			panic(err)
+		}
+		val, ok := fsKvMap[kv.Key]
+		if ok {
+			if now.After(val.initTime.Add(val.timeOut)) {
+				delete(fsKvMap, kv.Key)
+				return nil, errors.New("key does't exists")
+			}
+			return &pb.GetKVResponse{Value: val.value}, nil
+		}
 	}
 	return nil, errors.New("key does't exists")
 }
@@ -70,7 +104,25 @@ func (s *Server) GetKV(ctv context.Context, kv *pb.GetKVRequest) (*pb.GetKVRespo
 func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.DeleteKVResponse, error) {
 	_, ok := kvMap[req.Key]
 	if ok {
+		lock.Lock()
 		delete(kvMap, req.Key)
+		lock.Unlock()
+	} else {
+		var fsKvMap map[string]kvValue
+		var fsKvMapBytes []byte
+		_, err := kvDump.Read(fsKvMapBytes)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(fsKvMapBytes, &fsKvMap)
+		if err != nil {
+			panic(err)
+		}
+		_, ok := fsKvMap[req.Key]
+		if ok {
+			delete(fsKvMap, req.Key)
+			return &pb.DeleteKVResponse{Value: "OK"}, nil
+		}
 	}
 	return &pb.DeleteKVResponse{Value: "OK"}, nil
 }
@@ -123,10 +175,41 @@ func (s *Server) ManageMemory() {
 	for {
 		lock.Lock()
 		heapAlloc := heapMemoryAlloc()
+		log.Printf("\nHeap Allocation: %v", heapAlloc)
 		lock.Unlock()
-		fmt.Println(heapAlloc)
 		if heapAlloc >= bytes_in_gb {
-			// dump data
+			log.Printf("\nHeap memory usage is high: %v bytes\n", heapAlloc)
+			data, err := json.Marshal(kvMap)
+			if err != nil {
+				panic(err)
+			}
+			_, err = kvDump.Write(data)
+			if err != nil {
+				panic(err)
+			}
+			kvDump.Sync()
+			log.Printf("Dumped kvMap to .kv_dump file\n")
+			// Clear the in-memory map
+			lock.Lock()
+			kvMap = make(map[string]kvValue)
+			lock.Unlock()
+			log.Printf("Cleared in-memory kvMap\n")
+			// Dump queues
+			queueData, err := json.Marshal(queues)
+			if err != nil {
+				panic(err)
+			}
+			_, err = queueDump.Write(queueData)
+			if err != nil {
+				panic(err)
+			}
+			queueDump.Sync()
+			log.Printf("Dumped queues to .queue_dump file\n")
+			// Clear the in-memory queues
+			lock.Lock()
+			queues = make(map[string]*queue.Queue)
+			lock.Unlock()
+			log.Printf("Cleared in-memory queues\n")
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -143,6 +226,29 @@ func GarbageCollection() {
 	for {
 		lock.Lock()
 		for k, v := range kvMap {
+			now := time.Now()
+			if now.After(v.initTime.Add(v.timeOut)) {
+				delete(kvMap, k)
+			}
+		}
+		lock.Unlock()
+		lock.Lock()
+		var fsKvMap map[string]kvValue
+		var fsKvMapBytes []byte
+		_, err := kvDump.Read(fsKvMapBytes)
+		if len(fsKvMapBytes) == 0 {
+			lock.Unlock()
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(fsKvMapBytes, &fsKvMap)
+		if err != nil {
+			panic(err)
+		}
+		for k, v := range fsKvMap {
 			now := time.Now()
 			if now.After(v.initTime.Add(v.timeOut)) {
 				delete(kvMap, k)
