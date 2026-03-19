@@ -17,8 +17,12 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
+const BIT uint64 = 1
+const BYTES uint64 = 8 * BIT
+const KILO_BYTES uint64 = 1024 * BYTES
+const MEGA_BYTES uint64 = 1024 * KILO_BYTES
+
 var (
-	bytes_in_gb       uint64 = 1073741824
 	kvDump, queueDump *os.File
 )
 
@@ -53,7 +57,7 @@ func (s *Server) Init() {
 }
 
 func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVResponse, error) {
-	log.Printf("SetKV, key=%v, value=%v\n", kv.Key, kv.Value)
+	log.Printf("SetKV, key=%v, value=%v, HeapAllocation: %v\n", kv.Key, kv.Value, heapMemoryAlloc())
 	lock.Lock()
 	if len((kvMap)) == 0 {
 		kvMap = make(map[string]kvValue)
@@ -175,9 +179,9 @@ func (s *Server) ManageMemory() {
 	for {
 		lock.Lock()
 		heapAlloc := heapMemoryAlloc()
-		log.Printf("\nHeap Allocation: %v", heapAlloc)
+		fmt.Printf("\nHeap Allocation: %v", heapAlloc)
 		lock.Unlock()
-		if heapAlloc >= bytes_in_gb {
+		if heapAlloc >= (1 * MEGA_BYTES) {
 			log.Printf("\nHeap memory usage is high: %v bytes\n", heapAlloc)
 			data, err := json.Marshal(kvMap)
 			if err != nil {

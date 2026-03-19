@@ -1,23 +1,22 @@
 # Quash
 
-A high-performance gRPC-based caching and queueing service written in Go. Quash provides both key-value storage with TTL support and distributed queue operations through a simple gRPC interface.
+⚠️ **Work in progress** — Quash is an experimental gRPC-based caching and queueing service written in Go. It provides an in-memory key-value store (with TTL support) and a simple queue API via Protocol Buffers.
 
 ## Features
 
-- **Key-Value Store**: Store, retrieve, and delete key-value pairs with support for time-to-live (TTL)
-- **Queue Operations**: Push, pop, and manage multiple independent queues
-- **Automatic Garbage Collection**: Expired keys are automatically cleaned up
-- **gRPC Interface**: Modern, language-agnostic API using Protocol Buffers
-- **Thread-Safe**: Built with concurrent access patterns in mind
+- **Key-Value Store**: Store, retrieve, and delete key-value pairs with optional time-to-live (TTL)
+- **In-Memory Queues**: Push and pop values on named queues
+- **Memory-Based Persistence (Experimental)**: In-memory data may be dumped to disk when heap usage grows (see server implementation)
+- **gRPC API**: Language-agnostic API using Protocol Buffers
+
+> **Note:** This project is in an early stage. Some APIs are stubs or partially implemented (e.g., streaming endpoints currently have minimal implementations). Use for experimentation and prototyping only.
 
 ## Architecture
 
-Quash consists of several components:
-
-- **Server**: gRPC server listening on port 6300 that handles all client requests
-- **Queue System**: In-memory queue management with support for multiple named queues
-- **Garbage Collection**: Background process that automatically removes expired keys
-- **Client**: Go client library for easy integration into other services
+- **Server** (`/server`): gRPC server listening on `:6300`.
+- **Queue System** (`/server/queue`): Simple in-memory linked-list queues.
+- **Garbage Collection**: Background goroutines expire TTL entries and optionally dump data to disk.
+- **Client** (`/client`): A small Go client wrapper around the gRPC service.
 
 ## Project Structure
 
@@ -26,10 +25,10 @@ Quash consists of several components:
 ├── main.go                 # Entry point
 ├── go.mod                  # Go module definition
 ├── LICENSE                 # License file
-├── admin/                  # Admin utilities
+├── admin/                  # (Empty / reserved for future admin utilities)
 ├── client/                 # Go client library
 │   ├── client.go          # Client API implementation
-│   └── client_test.go     # Client tests
+│   └── client_test.go     # Client tests (experimental)
 ├── proto/                  # Protocol Buffer definitions
 │   ├── quash_proto.proto  # Service API definition
 │   ├── quash_proto.pb.go  # Generated protobuf code
@@ -47,177 +46,121 @@ Quash consists of several components:
 ### Prerequisites
 
 - Go 1.25.4 or later
-- gRPC and Protocol Buffers dependencies
 
 ### Setup
 
-1. Clone the repository:
 ```bash
 git clone https://github.com/mddfaisal/quash.git
 cd quash
-```
-
-2. Download dependencies:
-```bash
 go mod download
 ```
 
-3. Build the project:
+### Build & Run
+
 ```bash
 go build -o quash
-```
-
-4. Run the server:
-```bash
 ./quash
 ```
 
-The server will start listening on `0.0.0.0:6300`.
+By default, the server listens on `0.0.0.0:6300`.
 
-## API Documentation
+## Running Tests
 
-### Key-Value Operations
+Run the full test suite:
 
-#### SetKV
-Store a key-value pair with optional TTL:
-
-```proto
-message SetKVRequest {
-    string key = 1;
-    string value = 2;
-    int64 time_out_duration = 3;  // TTL in milliseconds
-    int64 init_time = 4;           // Initialization time
-}
-
-message SetKVResponse {
-    string response = 1;
-}
+```bash
+go test ./...
 ```
 
-#### GetKV
-Retrieve a value by key:
+> ⚠️ The current tests include a long-running loop in `client/client_test.go` and are primarily for manual experimentation.
 
-```proto
-message GetKVRequest {
-    string key = 1;
-}
+## API Reference
 
-message GetKVResponse {
-    string value = 1;
-}
-```
+The full API surface is defined in `proto/quash_proto.proto`.
 
-#### DeleteKV
-Delete a key-value pair:
+### Core RPCs (Implemented)
 
-```proto
-message DeleteKVRequest {
-    string key = 1;
-}
+- `SetKV` - store a key/value with a TTL
+- `GetKV` - retrieve a value by key
+- `DeleteKV` - delete a key/value
+- `PushQueue` - push a value onto a named queue
+- `QueryQueueList` - list existing queues
 
-message DeleteKVResponse {
-    string value = 1;
-}
-```
+### Note on Unimplemented / Experimental Endpoints
 
-### Queue Operations
+The following RPCs are defined in the proto file but their server-side implementations are currently incomplete or stubbed:
 
-#### PushIntoQueue
-Add an item to a queue:
-
-```proto
-message PushIntoQueueRequest {
-    string queue_name = 1;
-    string value = 2;
-}
-
-message PushIntoQueueResponse {
-    string response = 1;
-}
-```
-
-#### PopFromQueue
-Remove and return an item from a queue:
-
-```proto
-message PopFromQueueRequest {
-    string queue_name = 1;
-}
-
-message PopFromQueueResponse {
-    string response = 1;
-}
-```
-
-#### QueryQueueList
-List all available queues:
-
-```proto
-message QueryQueueListRequest {}
-
-message QueueListResponse {
-    repeated string queueList = 1;
-}
-```
-
-#### QueryQueueMetrics
-Get metrics for all queues:
-
-```proto
-message QueueMetricResponse {
-    map<string, int64> queue_matric = 1;  // Queue name to size mapping
-}
-```
+- `CreateQueue`
+- `DeleteQueue`
+- `PopQueue` (streaming)
+- `QueryQueueMetric` (streaming)
 
 ## Usage Example
-
-Using the provided Go client:
 
 ```go
 package main
 
 import (
     "context"
+    "fmt"
+    "time"
+
     "github.com/mddfaisal/quash/client"
     "github.com/mddfaisal/quash/proto"
 )
 
 func main() {
     ctx := context.Background()
-    
-    // Set a key-value pair with 5 minute TTL
+
+    // Set a key-value pair with a 5 minute TTL
     resp, err := client.SetKV(ctx, &proto.SetKVRequest{
-        Key:                  "user:123",
-        Value:                "John Doe",
-        TimeOutDuration:      300000, // 5 minutes in milliseconds
-        InitTime:             time.Now().UnixMilli(),
+        Key:             "user:123",
+        Value:           "John Doe",
+        TimeOutDuration: 300_000,
+        InitTime:        time.Now().UnixMilli(),
     })
-    
-    // Push to queue
-    qResp, err := client.PushIntoQueue(ctx, &proto.PushIntoQueueRequest{
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("SetKV response:", resp)
+
+    // Read it back
+    getResp, err := client.GetKV(ctx, &proto.GetKVRequest{Key: "user:123"})
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("GetKV value:", getResp.Value)
+
+    // Push an item into a queue
+    qResp, err := client.PushQueue(ctx, &proto.PushIntoQueueRequest{
         QueueName: "tasks",
         Value:     "process_order",
     })
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("PushQueue response:", qResp)
 }
 ```
 
 ## Building from Source
 
-To rebuild the protocol buffer files:
+To regenerate the protobuf bindings (requires `protoc` and the Go protobuf plugin):
 
 ```bash
 protoc --go_out=. --go-grpc_out=. proto/quash_proto.proto
 ```
 
-## Performance Characteristics
+## Known Limitations
 
-- **Key-Value Lookups**: O(1) average case
-- **Queue Operations**: O(1) for push/pop operations
-- **Garbage Collection**: Runs in the background without blocking client operations
+- No authentication/authorization or multi-tenant support
+- Single-node, in-memory storage (not durable by default)
+- Queue implementation is not thread-safe and may panic on empty pops
+- Some RPCs are currently unimplemented or behave as stubs
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! Please open issues or pull requests.
 
 ## License
 
