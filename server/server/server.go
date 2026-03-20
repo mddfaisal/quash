@@ -21,8 +21,8 @@ type kvValue struct {
 }
 
 var (
-	kvMap  map[string]kvValue
 	lock   = &sync.Mutex{}
+	kvMap  map[string]kvValue
 	queues = map[string]*queue.Queue{}
 )
 
@@ -139,4 +139,20 @@ func GarbageCollection() {
 func (s *Server) Shutdown() {
 	s.memoryDump()
 	log.Printf("gRPC server stopped gracefully\n")
+}
+
+func (s *Server) CreateQueue(ctx context.Context, req *pb.CreateQueueRequest) (*pb.CreateQueueResponse, error) {
+	lock.Lock()
+	queues[req.QueueName] = queue.NewQueue()
+	log.Printf("CreateQueue, Queue Name=%v\n", req.QueueName)
+	lock.Unlock()
+	return &pb.CreateQueueResponse{Response: "Queue created"}, nil
+}
+
+func (s *Server) DeleteQueue(ctx context.Context, req *pb.DeleteQueueRequest) (*pb.DeleteQueueResponse, error) {
+	lock.Lock()
+	delete(queues, req.QueueName)
+	log.Printf("DeleteQueue, Queue Name=%v\n", req.QueueName)
+	lock.Unlock()
+	return &pb.DeleteQueueResponse{Response: "Queue deleted"}, nil
 }
