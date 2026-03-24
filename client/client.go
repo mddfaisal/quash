@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	quash_proto "github.com/mddfaisal/quash/proto"
@@ -103,7 +104,31 @@ func PushQueue(ctx context.Context, req *quash_proto.PushIntoQueueRequest) (*qua
 	return resp, err
 }
 
-// func PopQueue(*pb.PopFromQueueRequest, grpc.ServerStreamingServer[pb.PopFromQueueResponse]) error {}
+func PopQueue(queueName string, data chan interface{}) error {
+	lock.Lock()
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	defer func() {
+		conn.Close()
+		lock.Unlock()
+	}()
+	if err != nil {
+		return err
+	}
+	client := quash_proto.NewQuashServiceClient(conn)
+	stream, err := client.PopQueue(context.Background(), &quash_proto.PopFromQueueRequest{
+		QueueName: queueName,
+	})
+	if err != nil {
+		return err
+	}
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		data <- resp.Response
+	}
+}
 
 func QueryQueueList(ctx context.Context, req *quash_proto.QueryQueueListRequest) (*quash_proto.QueueListResponse, error) {
 	lock.Lock()
@@ -120,5 +145,27 @@ func QueryQueueList(ctx context.Context, req *quash_proto.QueryQueueListRequest)
 	return resp, err
 }
 
-// func QueryQueueMetric(*pb.QueryQueueMetricRequest, grpc.ServerStreamingServer[pb.QueueMetricResponse]) error {
-// }
+func QueryQueueMetric(data chan *quash_proto.QueueMetricResponse) error {
+	lock.Lock()
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	defer func() {
+		conn.Close()
+		lock.Unlock()
+	}()
+	if err != nil {
+		return err
+	}
+	client := quash_proto.NewQuashServiceClient(conn)
+	stream, err := client.QueryQueueMetric(context.Background(), &quash_proto.QueryQueueMetricRequest{})
+	if err != nil {
+		return err
+	}
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		data <- resp
+		fmt.Printf("Queue Metrics: %v\n", resp.QueueMatric)
+	}
+}

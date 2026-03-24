@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"sync"
 	"time"
@@ -83,16 +82,22 @@ func (s *Server) PushQueue(ctx context.Context, q *pb.PushIntoQueueRequest) (*pb
 }
 
 func (s *Server) PopQueue(q *pb.PopFromQueueRequest, stream grpc.ServerStreamingServer[pb.PopFromQueueResponse]) error {
+	log.Printf("PopQueue, Queue Name=%v\n", q.QueueName)
 	for {
-		var m interface{}
-		err := stream.RecvMsg(&m)
-		if err == io.EOF {
-			return nil
+		queue, ok := queues[q.QueueName]
+		if !ok {
+			return errors.New("queue doesn't exist")
 		}
+		if queue.Count() == 0 {
+			continue
+		}
+		first := queues[q.QueueName].Pop()
+		err := stream.Send(&pb.PopFromQueueResponse{
+			Response: fmt.Sprintf("%v", first),
+		})
 		if err != nil {
-			panic(err)
+			return err
 		}
-		fmt.Println(m)
 	}
 }
 
@@ -106,15 +111,13 @@ func (s *Server) QueryQueueList(ctx context.Context, q *pb.QueryQueueListRequest
 
 func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.ServerStreamingServer[pb.QueueMetricResponse]) error {
 	for {
-		var m interface{}
-		err := stream.RecvMsg(&m)
-		if err == io.EOF {
-			return nil
+		var queueMetric = map[string]int64{}
+		for queue, totElements := range queues {
+			queueMetric[queue] = totElements.Count()
 		}
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(m)
+		stream.Send(&pb.QueueMetricResponse{
+			QueueMatric: queueMetric,
+		})
 	}
 }
 
