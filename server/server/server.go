@@ -52,6 +52,7 @@ func (s *Server) GetKV(ctv context.Context, kv *pb.GetKVRequest) (*pb.GetKVRespo
 	log.Printf("GetKV, key=%v\n", kv.Key)
 	now := time.Now()
 	lock.Lock()
+	defer lock.Unlock()
 	val, ok := kvMap[kv.Key]
 	if ok {
 		if now.After(val.initTime.Add(val.timeOut)) {
@@ -76,6 +77,10 @@ func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.Del
 func (s *Server) PushQueue(ctx context.Context, q *pb.PushIntoQueueRequest) (*pb.PushIntoQueueResponse, error) {
 	log.Printf("PushQueue, Queue Name=%v, Value=%v\n", q.QueueName, q.Value)
 	lock.Lock()
+	_, ok := queues[q.QueueName]
+	if !ok {
+		queues[q.QueueName] = queue.NewQueue()
+	}
 	queues[q.QueueName].Push(q.Value)
 	lock.Unlock()
 	return &pb.PushIntoQueueResponse{Response: "Pushed"}, nil
