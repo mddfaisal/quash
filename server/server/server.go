@@ -89,6 +89,7 @@ func (s *Server) PushQueue(ctx context.Context, q *pb.PushIntoQueueRequest) (*pb
 func (s *Server) PopQueue(q *pb.PopFromQueueRequest, stream grpc.ServerStreamingServer[pb.PopFromQueueResponse]) error {
 	log.Printf("PopQueue, Queue Name=%v\n", q.QueueName)
 	for {
+		lock.Lock()
 		queue, ok := queues[q.QueueName]
 		if !ok {
 			return errors.New("queue doesn't exist")
@@ -97,6 +98,7 @@ func (s *Server) PopQueue(q *pb.PopFromQueueRequest, stream grpc.ServerStreaming
 			continue
 		}
 		first := queues[q.QueueName].Pop()
+		lock.Unlock()
 		err := stream.Send(&pb.PopFromQueueResponse{
 			Response: fmt.Sprintf("%v", first),
 		})
