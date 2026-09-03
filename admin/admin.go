@@ -15,13 +15,54 @@ import (
 
 type PageData struct {
 	Title string
+	Items []string
 }
 
 var (
-	tmpl     = template.Must(template.ParseFiles("admin/templates/index.html"))
 	upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
+	tmpl = template.Must(template.New("index").Parse(`
+<!DOCTYPE html>
+<html>
+<title>{{.Title}}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      background-color: #f0f0f0;
+      padding: 10px;
+      text-align: left;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background-color: #e0e0e0;
+      margin: 5px 0;
+      padding: 10px;
+    }
+  </style>
+  <script>
+    const ws = new WebSocket("ws://localhost:6301/ws/admin");
+    ws.onmessage = (e) => {
+      const metrics = JSON.parse(e.data);
+      console.log("live queue metrics:", metrics);
+    };
+  </script>
+<body>
+  <h1>{{.Title}}</h1>
+  <ul>
+    {{range .Items}}<li>{{.}}</li>{{end}}
+  </ul>
+</body>
+</html>
+`))
 )
 
 func websocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -62,13 +103,8 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	data := PageData{
-		Title: "Admin",
-	}
-	if err := tmpl.Execute(w, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Println("template execute error:", err)
-	}
+	data := PageData{Title: "Hello", Items: []string{"a", "b", "c"}}
+	tmpl.Execute(w, data)
 }
 
 func AdminServer() {
