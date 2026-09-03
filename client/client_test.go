@@ -10,13 +10,6 @@ import (
 	quash_proto "github.com/mddfaisal/quash/proto"
 )
 
-type kv struct {
-	name     string
-	key      string
-	value    string
-	duration int64
-}
-
 func Test_SetKV(t *testing.T) {
 
 	for i := 0; i <= 10; i++ {
