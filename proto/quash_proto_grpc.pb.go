@@ -26,8 +26,8 @@ const (
 	QuashService_RemoveTopic_FullMethodName      = "/quash_proto.QuashService/RemoveTopic"
 	QuashService_PushQueue_FullMethodName        = "/quash_proto.QuashService/PushQueue"
 	QuashService_PopQueue_FullMethodName         = "/quash_proto.QuashService/PopQueue"
-	QuashService_QueryQueueList_FullMethodName   = "/quash_proto.QuashService/QueryQueueList"
-	QuashService_QueryQueueMetric_FullMethodName = "/quash_proto.QuashService/QueryQueueMetric"
+	QuashService_QueryTopicList_FullMethodName   = "/quash_proto.QuashService/QueryTopicList"
+	QuashService_QueryTopicMetric_FullMethodName = "/quash_proto.QuashService/QueryTopicMetric"
 )
 
 // QuashServiceClient is the client API for QuashService service.
@@ -41,8 +41,8 @@ type QuashServiceClient interface {
 	RemoveTopic(ctx context.Context, in *RemoveTopicRequest, opts ...grpc.CallOption) (*RemoveTopicResponse, error)
 	PushQueue(ctx context.Context, in *PushIntoQueueRequest, opts ...grpc.CallOption) (*PushIntoQueueResponse, error)
 	PopQueue(ctx context.Context, in *PopFromQueueRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PopFromQueueResponse], error)
-	QueryQueueList(ctx context.Context, in *QueryQueueListRequest, opts ...grpc.CallOption) (*QueueListResponse, error)
-	QueryQueueMetric(ctx context.Context, in *QueryQueueMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueMetricResponse], error)
+	QueryTopicList(ctx context.Context, in *QueryTopicListRequest, opts ...grpc.CallOption) (*QueueTopicListResponse, error)
+	QueryTopicMetric(ctx context.Context, in *QueryTopicMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueTopicMetricResponse], error)
 }
 
 type quashServiceClient struct {
@@ -132,23 +132,23 @@ func (c *quashServiceClient) PopQueue(ctx context.Context, in *PopFromQueueReque
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type QuashService_PopQueueClient = grpc.ServerStreamingClient[PopFromQueueResponse]
 
-func (c *quashServiceClient) QueryQueueList(ctx context.Context, in *QueryQueueListRequest, opts ...grpc.CallOption) (*QueueListResponse, error) {
+func (c *quashServiceClient) QueryTopicList(ctx context.Context, in *QueryTopicListRequest, opts ...grpc.CallOption) (*QueueTopicListResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueueListResponse)
-	err := c.cc.Invoke(ctx, QuashService_QueryQueueList_FullMethodName, in, out, cOpts...)
+	out := new(QueueTopicListResponse)
+	err := c.cc.Invoke(ctx, QuashService_QueryTopicList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *quashServiceClient) QueryQueueMetric(ctx context.Context, in *QueryQueueMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueMetricResponse], error) {
+func (c *quashServiceClient) QueryTopicMetric(ctx context.Context, in *QueryTopicMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueTopicMetricResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[1], QuashService_QueryQueueMetric_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[1], QuashService_QueryTopicMetric_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[QueryQueueMetricRequest, QueueMetricResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[QueryTopicMetricRequest, QueueTopicMetricResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func (c *quashServiceClient) QueryQueueMetric(ctx context.Context, in *QueryQueu
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_QueryQueueMetricClient = grpc.ServerStreamingClient[QueueMetricResponse]
+type QuashService_QueryTopicMetricClient = grpc.ServerStreamingClient[QueueTopicMetricResponse]
 
 // QuashServiceServer is the server API for QuashService service.
 // All implementations must embed UnimplementedQuashServiceServer
@@ -172,8 +172,8 @@ type QuashServiceServer interface {
 	RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error)
 	PushQueue(context.Context, *PushIntoQueueRequest) (*PushIntoQueueResponse, error)
 	PopQueue(*PopFromQueueRequest, grpc.ServerStreamingServer[PopFromQueueResponse]) error
-	QueryQueueList(context.Context, *QueryQueueListRequest) (*QueueListResponse, error)
-	QueryQueueMetric(*QueryQueueMetricRequest, grpc.ServerStreamingServer[QueueMetricResponse]) error
+	QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error)
+	QueryTopicMetric(*QueryTopicMetricRequest, grpc.ServerStreamingServer[QueueTopicMetricResponse]) error
 	mustEmbedUnimplementedQuashServiceServer()
 }
 
@@ -205,11 +205,11 @@ func (UnimplementedQuashServiceServer) PushQueue(context.Context, *PushIntoQueue
 func (UnimplementedQuashServiceServer) PopQueue(*PopFromQueueRequest, grpc.ServerStreamingServer[PopFromQueueResponse]) error {
 	return status.Error(codes.Unimplemented, "method PopQueue not implemented")
 }
-func (UnimplementedQuashServiceServer) QueryQueueList(context.Context, *QueryQueueListRequest) (*QueueListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method QueryQueueList not implemented")
+func (UnimplementedQuashServiceServer) QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method QueryTopicList not implemented")
 }
-func (UnimplementedQuashServiceServer) QueryQueueMetric(*QueryQueueMetricRequest, grpc.ServerStreamingServer[QueueMetricResponse]) error {
-	return status.Error(codes.Unimplemented, "method QueryQueueMetric not implemented")
+func (UnimplementedQuashServiceServer) QueryTopicMetric(*QueryTopicMetricRequest, grpc.ServerStreamingServer[QueueTopicMetricResponse]) error {
+	return status.Error(codes.Unimplemented, "method QueryTopicMetric not implemented")
 }
 func (UnimplementedQuashServiceServer) mustEmbedUnimplementedQuashServiceServer() {}
 func (UnimplementedQuashServiceServer) testEmbeddedByValue()                      {}
@@ -351,34 +351,34 @@ func _QuashService_PopQueue_Handler(srv interface{}, stream grpc.ServerStream) e
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type QuashService_PopQueueServer = grpc.ServerStreamingServer[PopFromQueueResponse]
 
-func _QuashService_QueryQueueList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryQueueListRequest)
+func _QuashService_QueryTopicList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryTopicListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QuashServiceServer).QueryQueueList(ctx, in)
+		return srv.(QuashServiceServer).QueryTopicList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: QuashService_QueryQueueList_FullMethodName,
+		FullMethod: QuashService_QueryTopicList_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuashServiceServer).QueryQueueList(ctx, req.(*QueryQueueListRequest))
+		return srv.(QuashServiceServer).QueryTopicList(ctx, req.(*QueryTopicListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuashService_QueryQueueMetric_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(QueryQueueMetricRequest)
+func _QuashService_QueryTopicMetric_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(QueryTopicMetricRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(QuashServiceServer).QueryQueueMetric(m, &grpc.GenericServerStream[QueryQueueMetricRequest, QueueMetricResponse]{ServerStream: stream})
+	return srv.(QuashServiceServer).QueryTopicMetric(m, &grpc.GenericServerStream[QueryTopicMetricRequest, QueueTopicMetricResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_QueryQueueMetricServer = grpc.ServerStreamingServer[QueueMetricResponse]
+type QuashService_QueryTopicMetricServer = grpc.ServerStreamingServer[QueueTopicMetricResponse]
 
 // QuashService_ServiceDesc is the grpc.ServiceDesc for QuashService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -412,8 +412,8 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _QuashService_PushQueue_Handler,
 		},
 		{
-			MethodName: "QueryQueueList",
-			Handler:    _QuashService_QueryQueueList_Handler,
+			MethodName: "QueryTopicList",
+			Handler:    _QuashService_QueryTopicList_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -423,8 +423,8 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "QueryQueueMetric",
-			Handler:       _QuashService_QueryQueueMetric_Handler,
+			StreamName:    "QueryTopicMetric",
+			Handler:       _QuashService_QueryTopicMetric_Handler,
 			ServerStreams: true,
 		},
 	},

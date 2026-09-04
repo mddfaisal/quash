@@ -129,7 +129,7 @@ func PopQueue(queueName string, data chan interface{}) error {
 	}
 }
 
-func QueryQueueList(ctx context.Context, req *quash_proto.QueryQueueListRequest) (*quash_proto.QueueListResponse, error) {
+func QueryTopicList(ctx context.Context, req *quash_proto.QueryTopicListRequest) (*quash_proto.QueueTopicListResponse, error) {
 	lock.Lock()
 	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
@@ -140,11 +140,11 @@ func QueryQueueList(ctx context.Context, req *quash_proto.QueryQueueListRequest)
 		return nil, err
 	}
 	client := quash_proto.NewQuashServiceClient(conn)
-	resp, err := client.QueryQueueList(ctx, req)
+	resp, err := client.QueryTopicList(ctx, req)
 	return resp, err
 }
 
-func QueryQueueMetric(data chan *quash_proto.QueueMetricResponse) error {
+func QueryTopicMetric(data chan *quash_proto.QueueTopicMetricResponse) error {
 	lock.Lock()
 	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
@@ -155,7 +155,7 @@ func QueryQueueMetric(data chan *quash_proto.QueueMetricResponse) error {
 		return err
 	}
 	client := quash_proto.NewQuashServiceClient(conn)
-	stream, err := client.QueryQueueMetric(context.Background(), &quash_proto.QueryQueueMetricRequest{})
+	stream, err := client.QueryTopicMetric(context.Background(), &quash_proto.QueryTopicMetricRequest{})
 	if err != nil {
 		return err
 	}

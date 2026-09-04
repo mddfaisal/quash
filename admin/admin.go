@@ -81,7 +81,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	defer grpcConn.Close()
 
 	client := pb.NewQuashServiceClient(grpcConn)
-	stream, err := client.QueryQueueMetric(r.Context(), &pb.QueryQueueMetricRequest{})
+	stream, err := client.QueryTopicMetric(r.Context(), &pb.QueryTopicMetricRequest{})
 	if err != nil {
 		log.Println("stream error:", err)
 		return
@@ -109,8 +109,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func AdminServer() {
 	http.HandleFunc("/ws/admin", websocketHandler)
-	fs := http.FileServer(http.Dir("./admin/templates/"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", indexHandler)
 	log.Println("admin server listening on", config.QuashTelemetry)
 	http.ListenAndServe(config.QuashTelemetry, nil)

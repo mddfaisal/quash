@@ -162,32 +162,32 @@ func Test_QueryQueueList(t *testing.T) {
 	tests := []struct {
 		name string
 		ctx  context.Context
-		req  *quash_proto.QueryQueueListRequest
-		resp *quash_proto.QueueListResponse
+		req  *quash_proto.QueryTopicListRequest
+		resp *quash_proto.QueueTopicListResponse
 		err  error
 	}{
 		{
-			name: "Query Queue List",
+			name: "Query Topic List",
 			ctx:  context.Background(),
-			req:  &quash_proto.QueryQueueListRequest{},
-			resp: &quash_proto.QueueListResponse{QueueList: []string{"test_queue"}},
+			req:  &quash_proto.QueryTopicListRequest{},
+			resp: &quash_proto.QueueTopicListResponse{TopicList: []string{"test_topic"}},
 			err:  nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp, err := QueryQueueList(tt.ctx, tt.req)
+			resp, err := QueryTopicList(tt.ctx, tt.req)
 			if err != tt.err {
 				t.Errorf("Expected error: %v, got: %v", tt.err, err)
-			} else if len(resp.QueueList) != len(tt.resp.QueueList) {
-				t.Errorf("Expected queue list length: %v, got: %v", len(tt.resp.QueueList), len(resp.QueueList))
+			} else if len(resp.TopicList) != len(tt.resp.TopicList) {
+				t.Errorf("Expected topic list length: %v, got: %v", len(tt.resp.TopicList), len(resp.TopicList))
 			} else {
-				for i, queue := range resp.QueueList {
-					if queue != tt.resp.QueueList[i] {
-						t.Errorf("Expected queue: %v, got: %v", tt.resp.QueueList[i], queue)
+				for i, topic := range resp.TopicList {
+					if topic != tt.resp.TopicList[i] {
+						t.Errorf("Expected topic: %v, got: %v", tt.resp.TopicList[i], topic)
 					}
 				}
-				t.Logf("Test passed with queue list: %v", resp.QueueList)
+				t.Logf("Test passed with topic list: %v", resp.TopicList)
 			}
 		})
 	}
@@ -233,11 +233,11 @@ func Test_QueryQueueMetric(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating topic: %v", err)
 	}
-	data := make(chan *quash_proto.QueueMetricResponse)
+	data := make(chan *quash_proto.QueueTopicMetricResponse)
 	go func() {
-		err := QueryQueueMetric(data)
+		err := QueryTopicMetric(data)
 		if err != nil {
-			t.Errorf("Error querying queue metrics: %v", err)
+			t.Errorf("Error querying topic metrics: %v", err)
 		}
 	}()
 	select {

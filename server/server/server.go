@@ -110,17 +110,17 @@ func (s *Server) PopQueue(q *pb.PopFromQueueRequest, stream grpc.ServerStreaming
 	}
 }
 
-func (s *Server) QueryQueueList(ctx context.Context, q *pb.QueryQueueListRequest) (*pb.QueueListResponse, error) {
+func (s *Server) QueryTopicList(ctx context.Context, q *pb.QueryTopicListRequest) (*pb.QueueTopicListResponse, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	list := []string{}
 	for k := range queues {
 		list = append(list, k)
 	}
-	return &pb.QueueListResponse{QueueList: list}, nil
+	return &pb.QueueTopicListResponse{TopicList: list}, nil
 }
 
-func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.ServerStreamingServer[pb.QueueMetricResponse]) error {
+func (s *Server) QueryTopicMetric(q *pb.QueryTopicMetricRequest, stream grpc.ServerStreamingServer[pb.QueueTopicMetricResponse]) error {
 	for {
 		lock.Lock()
 		queueMetric := make(map[string]int64, len(queues))
@@ -129,7 +129,7 @@ func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.Ser
 		}
 		lock.Unlock()
 
-		if err := stream.Send(&pb.QueueMetricResponse{
+		if err := stream.Send(&pb.QueueTopicMetricResponse{
 			QueueMetric: queueMetric,
 		}); err != nil {
 			return err

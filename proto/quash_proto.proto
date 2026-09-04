@@ -48,17 +48,17 @@ message PopFromQueueResponse {
     string response = 1;
 }
 
-message QueueListResponse {
-    repeated string queueList = 1;
+message QueueTopicListResponse {
+    repeated string topic_list = 1;
 }
 
-message QueueMetricResponse {
+message QueueTopicMetricResponse {
     map<string, int64> queue_metric = 1;
 }
 
-message QueryQueueListRequest{}
+message QueryTopicListRequest{}
 
-message QueryQueueMetricRequest{}
+message QueryTopicMetricRequest{}
 
 message CreateTopicRequest{
     string topic_name = 1;
@@ -88,6 +88,6 @@ service QuashService {
     rpc PushQueue (PushIntoQueueRequest) returns (PushIntoQueueResponse);
     rpc PopQueue (PopFromQueueRequest) returns (stream PopFromQueueResponse);
 
-    rpc QueryQueueList(QueryQueueListRequest) returns (QueueListResponse);
-    rpc QueryQueueMetric(QueryQueueMetricRequest) returns (stream QueueMetricResponse);
+    rpc QueryTopicList(QueryTopicListRequest) returns (QueueTopicListResponse);
+    rpc QueryTopicMetric(QueryTopicMetricRequest) returns (stream QueueTopicMetricResponse);
 }
