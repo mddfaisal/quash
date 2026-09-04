@@ -93,7 +93,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("stream recv error:", err)
 			return
 		}
-		data, _ := json.Marshal(resp.QueueMatric)
+		data, _ := json.Marshal(resp.QueueMetric)
 		if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
 			log.Println("ws write error:", err)
 			return

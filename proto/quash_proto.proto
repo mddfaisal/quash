@@ -53,37 +53,41 @@ message QueueListResponse {
 }
 
 message QueueMetricResponse {
-    map<string, int64> queue_matric = 1;
+    map<string, int64> queue_metric = 1;
 }
 
 message QueryQueueListRequest{}
 
 message QueryQueueMetricRequest{}
 
-message CreateQueueRequest{
-    string queue_name = 1;
+message CreateTopicRequest{
+    string topic_name = 1;
 }
 
-message CreateQueueResponse{
+message CreateTopicResponse{
     string response = 1;
 }
 
-message DeleteQueueRequest{
-    string queue_name = 1;
+message RemoveTopicRequest{
+    string topic_name = 1;
 }
 
-message DeleteQueueResponse{
+message RemoveTopicResponse{
     string response = 1;
 }
 
 service QuashService {
+
     rpc SetKV (SetKVRequest) returns (SetKVResponse);
     rpc GetKV (GetKVRequest) returns (GetKVResponse);
     rpc DeleteKV (DeleteKVRequest) returns (DeleteKVResponse);
-    rpc CreateQueue(CreateQueueRequest) returns (CreateQueueResponse);
-    rpc DeleteQueue(DeleteQueueRequest) returns (DeleteQueueResponse);
+
+    rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
+    rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
+
     rpc PushQueue (PushIntoQueueRequest) returns (PushIntoQueueResponse);
     rpc PopQueue (PopFromQueueRequest) returns (stream PopFromQueueResponse);
+
     rpc QueryQueueList(QueryQueueListRequest) returns (QueueListResponse);
     rpc QueryQueueMetric(QueryQueueMetricRequest) returns (stream QueueMetricResponse);
 }

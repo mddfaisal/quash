@@ -43,18 +43,18 @@ func Test_CreateQueue(t *testing.T) {
 	tests := []struct {
 		name string
 		ctx  context.Context
-		req  *quash_proto.CreateQueueRequest
-		resp *quash_proto.CreateQueueResponse
+		req  *quash_proto.CreateTopicRequest
+		resp *quash_proto.CreateTopicResponse
 		err  error
 	}{
 		{
-			name: "Create Queue",
+			name: "Create Topic",
 			ctx:  context.Background(),
-			req: &quash_proto.CreateQueueRequest{
-				QueueName: "test_queue",
+			req: &quash_proto.CreateTopicRequest{
+				TopicName: "test_topic",
 			},
-			resp: &quash_proto.CreateQueueResponse{
-				Response: "Queue created",
+			resp: &quash_proto.CreateTopicResponse{
+				Response: "Topic created",
 			},
 			err: nil,
 		},
@@ -62,7 +62,7 @@ func Test_CreateQueue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp, err := CreateQueue(tt.ctx, tt.req)
+			resp, err := CreateTopic(tt.ctx, tt.req)
 			if err != tt.err {
 				t.Errorf("Expected error: %v, got: %v", tt.err, err)
 			} else if resp.Response != tt.resp.Response {
@@ -78,17 +78,17 @@ func Test_DeleteQueue(t *testing.T) {
 	tests := []struct {
 		name string
 		ctx  context.Context
-		req  *quash_proto.DeleteQueueRequest
-		resp *quash_proto.DeleteQueueResponse
+		req  *quash_proto.RemoveTopicRequest
+		resp *quash_proto.RemoveTopicResponse
 		err  error
 	}{
 		{
-			name: "Delete Queue",
+			name: "Delete Topic",
 			ctx:  context.Background(),
-			req: &quash_proto.DeleteQueueRequest{
-				QueueName: "test_queue",
+			req: &quash_proto.RemoveTopicRequest{
+				TopicName: "test_topic",
 			},
-			resp: &quash_proto.DeleteQueueResponse{
+			resp: &quash_proto.RemoveTopicResponse{
 				Response: "Queue deleted",
 			},
 			err: nil,
@@ -97,10 +97,10 @@ func Test_DeleteQueue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			CreateQueue(context.Background(), &quash_proto.CreateQueueRequest{
-				QueueName: tt.req.QueueName,
+			CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
+				TopicName: tt.req.TopicName,
 			})
-			resp, err := DeleteQueue(tt.ctx, tt.req)
+			resp, err := DeleteTopic(tt.ctx, tt.req)
 			if err != tt.err {
 				t.Errorf("Expected error: %v, got: %v", tt.err, err)
 			} else if resp.Response != tt.resp.Response {
@@ -112,11 +112,11 @@ func Test_DeleteQueue(t *testing.T) {
 	}
 }
 func Test_PushQueue(t *testing.T) {
-	_, err := CreateQueue(context.Background(), &quash_proto.CreateQueueRequest{
-		QueueName: "test_queue",
+	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
+		TopicName: "test_topic",
 	})
 	if err != nil {
-		t.Errorf("Error creating queue: %v", err)
+		t.Errorf("Error creating topic: %v", err)
 	}
 	tests := []struct {
 		name string
@@ -153,11 +153,11 @@ func Test_PushQueue(t *testing.T) {
 }
 
 func Test_QueryQueueList(t *testing.T) {
-	_, err := CreateQueue(context.Background(), &quash_proto.CreateQueueRequest{
-		QueueName: "test_queue",
+	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
+		TopicName: "test_topic",
 	})
 	if err != nil {
-		t.Errorf("Error creating queue: %v", err)
+		t.Errorf("Error creating topic: %v", err)
 	}
 	tests := []struct {
 		name string
@@ -194,11 +194,11 @@ func Test_QueryQueueList(t *testing.T) {
 }
 
 func Test_PopQueue(t *testing.T) {
-	_, err := CreateQueue(context.Background(), &quash_proto.CreateQueueRequest{
-		QueueName: "test_queue",
+	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
+		TopicName: "test_topic",
 	})
 	if err != nil {
-		t.Errorf("Error creating queue: %v", err)
+		t.Errorf("Error creating topic: %v", err)
 	}
 	_, err = PushQueue(context.Background(), &quash_proto.PushIntoQueueRequest{
 		QueueName: "test_queue",
@@ -227,11 +227,11 @@ func Test_PopQueue(t *testing.T) {
 }
 
 func Test_QueryQueueMetric(t *testing.T) {
-	_, err := CreateQueue(context.Background(), &quash_proto.CreateQueueRequest{
-		QueueName: "test_queue",
+	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
+		TopicName: "test_topic",
 	})
 	if err != nil {
-		t.Errorf("Error creating queue: %v", err)
+		t.Errorf("Error creating topic: %v", err)
 	}
 	data := make(chan *quash_proto.QueueMetricResponse)
 	go func() {
@@ -245,7 +245,7 @@ func Test_QueryQueueMetric(t *testing.T) {
 		if resp == nil {
 			t.Error("Expected response, got nil")
 		} else {
-			t.Logf("Test passed with response: %v", resp.QueueMatric)
+			t.Logf("Test passed with response: %v", resp.QueueMetric)
 		}
 		close(data)
 	case <-time.After(5 * time.Second):

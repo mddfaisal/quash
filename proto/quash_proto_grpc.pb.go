@@ -22,8 +22,8 @@ const (
 	QuashService_SetKV_FullMethodName            = "/quash_proto.QuashService/SetKV"
 	QuashService_GetKV_FullMethodName            = "/quash_proto.QuashService/GetKV"
 	QuashService_DeleteKV_FullMethodName         = "/quash_proto.QuashService/DeleteKV"
-	QuashService_CreateQueue_FullMethodName      = "/quash_proto.QuashService/CreateQueue"
-	QuashService_DeleteQueue_FullMethodName      = "/quash_proto.QuashService/DeleteQueue"
+	QuashService_CreateTopic_FullMethodName      = "/quash_proto.QuashService/CreateTopic"
+	QuashService_RemoveTopic_FullMethodName      = "/quash_proto.QuashService/RemoveTopic"
 	QuashService_PushQueue_FullMethodName        = "/quash_proto.QuashService/PushQueue"
 	QuashService_PopQueue_FullMethodName         = "/quash_proto.QuashService/PopQueue"
 	QuashService_QueryQueueList_FullMethodName   = "/quash_proto.QuashService/QueryQueueList"
@@ -37,8 +37,8 @@ type QuashServiceClient interface {
 	SetKV(ctx context.Context, in *SetKVRequest, opts ...grpc.CallOption) (*SetKVResponse, error)
 	GetKV(ctx context.Context, in *GetKVRequest, opts ...grpc.CallOption) (*GetKVResponse, error)
 	DeleteKV(ctx context.Context, in *DeleteKVRequest, opts ...grpc.CallOption) (*DeleteKVResponse, error)
-	CreateQueue(ctx context.Context, in *CreateQueueRequest, opts ...grpc.CallOption) (*CreateQueueResponse, error)
-	DeleteQueue(ctx context.Context, in *DeleteQueueRequest, opts ...grpc.CallOption) (*DeleteQueueResponse, error)
+	CreateTopic(ctx context.Context, in *CreateTopicRequest, opts ...grpc.CallOption) (*CreateTopicResponse, error)
+	RemoveTopic(ctx context.Context, in *RemoveTopicRequest, opts ...grpc.CallOption) (*RemoveTopicResponse, error)
 	PushQueue(ctx context.Context, in *PushIntoQueueRequest, opts ...grpc.CallOption) (*PushIntoQueueResponse, error)
 	PopQueue(ctx context.Context, in *PopFromQueueRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PopFromQueueResponse], error)
 	QueryQueueList(ctx context.Context, in *QueryQueueListRequest, opts ...grpc.CallOption) (*QueueListResponse, error)
@@ -83,20 +83,20 @@ func (c *quashServiceClient) DeleteKV(ctx context.Context, in *DeleteKVRequest, 
 	return out, nil
 }
 
-func (c *quashServiceClient) CreateQueue(ctx context.Context, in *CreateQueueRequest, opts ...grpc.CallOption) (*CreateQueueResponse, error) {
+func (c *quashServiceClient) CreateTopic(ctx context.Context, in *CreateTopicRequest, opts ...grpc.CallOption) (*CreateTopicResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateQueueResponse)
-	err := c.cc.Invoke(ctx, QuashService_CreateQueue_FullMethodName, in, out, cOpts...)
+	out := new(CreateTopicResponse)
+	err := c.cc.Invoke(ctx, QuashService_CreateTopic_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *quashServiceClient) DeleteQueue(ctx context.Context, in *DeleteQueueRequest, opts ...grpc.CallOption) (*DeleteQueueResponse, error) {
+func (c *quashServiceClient) RemoveTopic(ctx context.Context, in *RemoveTopicRequest, opts ...grpc.CallOption) (*RemoveTopicResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteQueueResponse)
-	err := c.cc.Invoke(ctx, QuashService_DeleteQueue_FullMethodName, in, out, cOpts...)
+	out := new(RemoveTopicResponse)
+	err := c.cc.Invoke(ctx, QuashService_RemoveTopic_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,8 +168,8 @@ type QuashServiceServer interface {
 	SetKV(context.Context, *SetKVRequest) (*SetKVResponse, error)
 	GetKV(context.Context, *GetKVRequest) (*GetKVResponse, error)
 	DeleteKV(context.Context, *DeleteKVRequest) (*DeleteKVResponse, error)
-	CreateQueue(context.Context, *CreateQueueRequest) (*CreateQueueResponse, error)
-	DeleteQueue(context.Context, *DeleteQueueRequest) (*DeleteQueueResponse, error)
+	CreateTopic(context.Context, *CreateTopicRequest) (*CreateTopicResponse, error)
+	RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error)
 	PushQueue(context.Context, *PushIntoQueueRequest) (*PushIntoQueueResponse, error)
 	PopQueue(*PopFromQueueRequest, grpc.ServerStreamingServer[PopFromQueueResponse]) error
 	QueryQueueList(context.Context, *QueryQueueListRequest) (*QueueListResponse, error)
@@ -193,11 +193,11 @@ func (UnimplementedQuashServiceServer) GetKV(context.Context, *GetKVRequest) (*G
 func (UnimplementedQuashServiceServer) DeleteKV(context.Context, *DeleteKVRequest) (*DeleteKVResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteKV not implemented")
 }
-func (UnimplementedQuashServiceServer) CreateQueue(context.Context, *CreateQueueRequest) (*CreateQueueResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateQueue not implemented")
+func (UnimplementedQuashServiceServer) CreateTopic(context.Context, *CreateTopicRequest) (*CreateTopicResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTopic not implemented")
 }
-func (UnimplementedQuashServiceServer) DeleteQueue(context.Context, *DeleteQueueRequest) (*DeleteQueueResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DeleteQueue not implemented")
+func (UnimplementedQuashServiceServer) RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveTopic not implemented")
 }
 func (UnimplementedQuashServiceServer) PushQueue(context.Context, *PushIntoQueueRequest) (*PushIntoQueueResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method PushQueue not implemented")
@@ -286,38 +286,38 @@ func _QuashService_DeleteKV_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuashService_CreateQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateQueueRequest)
+func _QuashService_CreateTopic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTopicRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QuashServiceServer).CreateQueue(ctx, in)
+		return srv.(QuashServiceServer).CreateTopic(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: QuashService_CreateQueue_FullMethodName,
+		FullMethod: QuashService_CreateTopic_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuashServiceServer).CreateQueue(ctx, req.(*CreateQueueRequest))
+		return srv.(QuashServiceServer).CreateTopic(ctx, req.(*CreateTopicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuashService_DeleteQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteQueueRequest)
+func _QuashService_RemoveTopic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveTopicRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QuashServiceServer).DeleteQueue(ctx, in)
+		return srv.(QuashServiceServer).RemoveTopic(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: QuashService_DeleteQueue_FullMethodName,
+		FullMethod: QuashService_RemoveTopic_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuashServiceServer).DeleteQueue(ctx, req.(*DeleteQueueRequest))
+		return srv.(QuashServiceServer).RemoveTopic(ctx, req.(*RemoveTopicRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -400,12 +400,12 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _QuashService_DeleteKV_Handler,
 		},
 		{
-			MethodName: "CreateQueue",
-			Handler:    _QuashService_CreateQueue_Handler,
+			MethodName: "CreateTopic",
+			Handler:    _QuashService_CreateTopic_Handler,
 		},
 		{
-			MethodName: "DeleteQueue",
-			Handler:    _QuashService_DeleteQueue_Handler,
+			MethodName: "RemoveTopic",
+			Handler:    _QuashService_RemoveTopic_Handler,
 		},
 		{
 			MethodName: "PushQueue",

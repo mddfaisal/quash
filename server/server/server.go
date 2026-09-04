@@ -130,7 +130,7 @@ func (s *Server) QueryQueueMetric(q *pb.QueryQueueMetricRequest, stream grpc.Ser
 		lock.Unlock()
 
 		if err := stream.Send(&pb.QueueMetricResponse{
-			QueueMatric: queueMetric,
+			QueueMetric: queueMetric,
 		}); err != nil {
 			return err
 		}
@@ -166,18 +166,18 @@ func (s *Server) Shutdown() {
 	log.Printf("gRPC server stopped gracefully\n")
 }
 
-func (s *Server) CreateQueue(ctx context.Context, req *pb.CreateQueueRequest) (*pb.CreateQueueResponse, error) {
+func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*pb.CreateTopicResponse, error) {
 	lock.Lock()
-	queues[req.QueueName] = queue.NewQueue()
-	log.Printf("CreateQueue, Queue Name=%v\n", req.QueueName)
+	queues[req.TopicName] = queue.NewQueue()
+	log.Printf("CreateTopic, Topic Name=%v\n", req.TopicName)
 	lock.Unlock()
-	return &pb.CreateQueueResponse{Response: "Queue created"}, nil
+	return &pb.CreateTopicResponse{Response: "Topic created"}, nil
 }
 
-func (s *Server) DeleteQueue(ctx context.Context, req *pb.DeleteQueueRequest) (*pb.DeleteQueueResponse, error) {
+func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*pb.RemoveTopicResponse, error) {
 	lock.Lock()
-	delete(queues, req.QueueName)
-	log.Printf("DeleteQueue, Queue Name=%v\n", req.QueueName)
+	delete(queues, req.TopicName)
+	log.Printf("RemoveTopic, Topic Name=%v\n", req.TopicName)
 	lock.Unlock()
-	return &pb.DeleteQueueResponse{Response: "Queue deleted"}, nil
+	return &pb.RemoveTopicResponse{Response: "Topic deleted"}, nil
 }

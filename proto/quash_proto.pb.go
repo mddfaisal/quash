@@ -539,7 +539,7 @@ func (x *QueueListResponse) GetQueueList() []string {
 
 type QueueMetricResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueMatric   map[string]int64       `protobuf:"bytes,1,rep,name=queue_matric,json=queueMatric,proto3" json:"queue_matric,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	QueueMetric   map[string]int64       `protobuf:"bytes,1,rep,name=queue_metric,json=queueMetric,proto3" json:"queue_metric,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -574,9 +574,9 @@ func (*QueueMetricResponse) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *QueueMetricResponse) GetQueueMatric() map[string]int64 {
+func (x *QueueMetricResponse) GetQueueMetric() map[string]int64 {
 	if x != nil {
-		return x.QueueMatric
+		return x.QueueMetric
 	}
 	return nil
 }
@@ -653,27 +653,27 @@ func (*QueryQueueMetricRequest) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{13}
 }
 
-type CreateQueueRequest struct {
+type CreateTopicRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueName     string                 `protobuf:"bytes,1,opt,name=queue_name,json=queueName,proto3" json:"queue_name,omitempty"`
+	TopicName     string                 `protobuf:"bytes,1,opt,name=topic_name,json=topicName,proto3" json:"topic_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateQueueRequest) Reset() {
-	*x = CreateQueueRequest{}
+func (x *CreateTopicRequest) Reset() {
+	*x = CreateTopicRequest{}
 	mi := &file_quash_proto_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateQueueRequest) String() string {
+func (x *CreateTopicRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateQueueRequest) ProtoMessage() {}
+func (*CreateTopicRequest) ProtoMessage() {}
 
-func (x *CreateQueueRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateTopicRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -685,39 +685,39 @@ func (x *CreateQueueRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateQueueRequest.ProtoReflect.Descriptor instead.
-func (*CreateQueueRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateTopicRequest.ProtoReflect.Descriptor instead.
+func (*CreateTopicRequest) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *CreateQueueRequest) GetQueueName() string {
+func (x *CreateTopicRequest) GetTopicName() string {
 	if x != nil {
-		return x.QueueName
+		return x.TopicName
 	}
 	return ""
 }
 
-type CreateQueueResponse struct {
+type CreateTopicResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CreateQueueResponse) Reset() {
-	*x = CreateQueueResponse{}
+func (x *CreateTopicResponse) Reset() {
+	*x = CreateTopicResponse{}
 	mi := &file_quash_proto_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CreateQueueResponse) String() string {
+func (x *CreateTopicResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CreateQueueResponse) ProtoMessage() {}
+func (*CreateTopicResponse) ProtoMessage() {}
 
-func (x *CreateQueueResponse) ProtoReflect() protoreflect.Message {
+func (x *CreateTopicResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -729,39 +729,39 @@ func (x *CreateQueueResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CreateQueueResponse.ProtoReflect.Descriptor instead.
-func (*CreateQueueResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateTopicResponse.ProtoReflect.Descriptor instead.
+func (*CreateTopicResponse) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *CreateQueueResponse) GetResponse() string {
+func (x *CreateTopicResponse) GetResponse() string {
 	if x != nil {
 		return x.Response
 	}
 	return ""
 }
 
-type DeleteQueueRequest struct {
+type RemoveTopicRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	QueueName     string                 `protobuf:"bytes,1,opt,name=queue_name,json=queueName,proto3" json:"queue_name,omitempty"`
+	TopicName     string                 `protobuf:"bytes,1,opt,name=topic_name,json=topicName,proto3" json:"topic_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteQueueRequest) Reset() {
-	*x = DeleteQueueRequest{}
+func (x *RemoveTopicRequest) Reset() {
+	*x = RemoveTopicRequest{}
 	mi := &file_quash_proto_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteQueueRequest) String() string {
+func (x *RemoveTopicRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteQueueRequest) ProtoMessage() {}
+func (*RemoveTopicRequest) ProtoMessage() {}
 
-func (x *DeleteQueueRequest) ProtoReflect() protoreflect.Message {
+func (x *RemoveTopicRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -773,39 +773,39 @@ func (x *DeleteQueueRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteQueueRequest.ProtoReflect.Descriptor instead.
-func (*DeleteQueueRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveTopicRequest.ProtoReflect.Descriptor instead.
+func (*RemoveTopicRequest) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *DeleteQueueRequest) GetQueueName() string {
+func (x *RemoveTopicRequest) GetTopicName() string {
 	if x != nil {
-		return x.QueueName
+		return x.TopicName
 	}
 	return ""
 }
 
-type DeleteQueueResponse struct {
+type RemoveTopicResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteQueueResponse) Reset() {
-	*x = DeleteQueueResponse{}
+func (x *RemoveTopicResponse) Reset() {
+	*x = RemoveTopicResponse{}
 	mi := &file_quash_proto_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteQueueResponse) String() string {
+func (x *RemoveTopicResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteQueueResponse) ProtoMessage() {}
+func (*RemoveTopicResponse) ProtoMessage() {}
 
-func (x *DeleteQueueResponse) ProtoReflect() protoreflect.Message {
+func (x *RemoveTopicResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -817,12 +817,12 @@ func (x *DeleteQueueResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteQueueResponse.ProtoReflect.Descriptor instead.
-func (*DeleteQueueResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use RemoveTopicResponse.ProtoReflect.Descriptor instead.
+func (*RemoveTopicResponse) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *DeleteQueueResponse) GetResponse() string {
+func (x *RemoveTopicResponse) GetResponse() string {
 	if x != nil {
 		return x.Response
 	}
@@ -863,28 +863,28 @@ const file_quash_proto_proto_rawDesc = "" +
 	"\x11QueueListResponse\x12\x1c\n" +
 	"\tqueueList\x18\x01 \x03(\tR\tqueueList\"\xab\x01\n" +
 	"\x13QueueMetricResponse\x12T\n" +
-	"\fqueue_matric\x18\x01 \x03(\v21.quash_proto.QueueMetricResponse.QueueMatricEntryR\vqueueMatric\x1a>\n" +
-	"\x10QueueMatricEntry\x12\x10\n" +
+	"\fqueue_metric\x18\x01 \x03(\v21.quash_proto.QueueMetricResponse.QueueMetricEntryR\vqueueMetric\x1a>\n" +
+	"\x10QueueMetricEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\x17\n" +
 	"\x15QueryQueueListRequest\"\x19\n" +
 	"\x17QueryQueueMetricRequest\"3\n" +
-	"\x12CreateQueueRequest\x12\x1d\n" +
+	"\x12CreateTopicRequest\x12\x1d\n" +
 	"\n" +
-	"queue_name\x18\x01 \x01(\tR\tqueueName\"1\n" +
-	"\x13CreateQueueResponse\x12\x1a\n" +
+	"topic_name\x18\x01 \x01(\tR\ttopicName\"1\n" +
+	"\x13CreateTopicResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"3\n" +
-	"\x12DeleteQueueRequest\x12\x1d\n" +
+	"\x12RemoveTopicRequest\x12\x1d\n" +
 	"\n" +
-	"queue_name\x18\x01 \x01(\tR\tqueueName\"1\n" +
-	"\x13DeleteQueueResponse\x12\x1a\n" +
+	"topic_name\x18\x01 \x01(\tR\ttopicName\"1\n" +
+	"\x13RemoveTopicResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse2\xd6\x05\n" +
 	"\fQuashService\x12>\n" +
 	"\x05SetKV\x12\x19.quash_proto.SetKVRequest\x1a\x1a.quash_proto.SetKVResponse\x12>\n" +
 	"\x05GetKV\x12\x19.quash_proto.GetKVRequest\x1a\x1a.quash_proto.GetKVResponse\x12G\n" +
 	"\bDeleteKV\x12\x1c.quash_proto.DeleteKVRequest\x1a\x1d.quash_proto.DeleteKVResponse\x12P\n" +
-	"\vCreateQueue\x12\x1f.quash_proto.CreateQueueRequest\x1a .quash_proto.CreateQueueResponse\x12P\n" +
-	"\vDeleteQueue\x12\x1f.quash_proto.DeleteQueueRequest\x1a .quash_proto.DeleteQueueResponse\x12R\n" +
+	"\vCreateTopic\x12\x1f.quash_proto.CreateTopicRequest\x1a .quash_proto.CreateTopicResponse\x12P\n" +
+	"\vRemoveTopic\x12\x1f.quash_proto.RemoveTopicRequest\x1a .quash_proto.RemoveTopicResponse\x12R\n" +
 	"\tPushQueue\x12!.quash_proto.PushIntoQueueRequest\x1a\".quash_proto.PushIntoQueueResponse\x12Q\n" +
 	"\bPopQueue\x12 .quash_proto.PopFromQueueRequest\x1a!.quash_proto.PopFromQueueResponse0\x01\x12T\n" +
 	"\x0eQueryQueueList\x12\".quash_proto.QueryQueueListRequest\x1a\x1e.quash_proto.QueueListResponse\x12\\\n" +
@@ -918,19 +918,19 @@ var file_quash_proto_proto_goTypes = []any{
 	(*QueueMetricResponse)(nil),     // 11: quash_proto.QueueMetricResponse
 	(*QueryQueueListRequest)(nil),   // 12: quash_proto.QueryQueueListRequest
 	(*QueryQueueMetricRequest)(nil), // 13: quash_proto.QueryQueueMetricRequest
-	(*CreateQueueRequest)(nil),      // 14: quash_proto.CreateQueueRequest
-	(*CreateQueueResponse)(nil),     // 15: quash_proto.CreateQueueResponse
-	(*DeleteQueueRequest)(nil),      // 16: quash_proto.DeleteQueueRequest
-	(*DeleteQueueResponse)(nil),     // 17: quash_proto.DeleteQueueResponse
-	nil,                             // 18: quash_proto.QueueMetricResponse.QueueMatricEntry
+	(*CreateTopicRequest)(nil),      // 14: quash_proto.CreateTopicRequest
+	(*CreateTopicResponse)(nil),     // 15: quash_proto.CreateTopicResponse
+	(*RemoveTopicRequest)(nil),      // 16: quash_proto.RemoveTopicRequest
+	(*RemoveTopicResponse)(nil),     // 17: quash_proto.RemoveTopicResponse
+	nil,                             // 18: quash_proto.QueueMetricResponse.QueueMetricEntry
 }
 var file_quash_proto_proto_depIdxs = []int32{
-	18, // 0: quash_proto.QueueMetricResponse.queue_matric:type_name -> quash_proto.QueueMetricResponse.QueueMatricEntry
+	18, // 0: quash_proto.QueueMetricResponse.queue_metric:type_name -> quash_proto.QueueMetricResponse.QueueMetricEntry
 	0,  // 1: quash_proto.QuashService.SetKV:input_type -> quash_proto.SetKVRequest
 	2,  // 2: quash_proto.QuashService.GetKV:input_type -> quash_proto.GetKVRequest
 	4,  // 3: quash_proto.QuashService.DeleteKV:input_type -> quash_proto.DeleteKVRequest
-	14, // 4: quash_proto.QuashService.CreateQueue:input_type -> quash_proto.CreateQueueRequest
-	16, // 5: quash_proto.QuashService.DeleteQueue:input_type -> quash_proto.DeleteQueueRequest
+	14, // 4: quash_proto.QuashService.CreateTopic:input_type -> quash_proto.CreateTopicRequest
+	16, // 5: quash_proto.QuashService.RemoveTopic:input_type -> quash_proto.RemoveTopicRequest
 	6,  // 6: quash_proto.QuashService.PushQueue:input_type -> quash_proto.PushIntoQueueRequest
 	8,  // 7: quash_proto.QuashService.PopQueue:input_type -> quash_proto.PopFromQueueRequest
 	12, // 8: quash_proto.QuashService.QueryQueueList:input_type -> quash_proto.QueryQueueListRequest
@@ -938,8 +938,8 @@ var file_quash_proto_proto_depIdxs = []int32{
 	1,  // 10: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
 	3,  // 11: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
 	5,  // 12: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
-	15, // 13: quash_proto.QuashService.CreateQueue:output_type -> quash_proto.CreateQueueResponse
-	17, // 14: quash_proto.QuashService.DeleteQueue:output_type -> quash_proto.DeleteQueueResponse
+	15, // 13: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
+	17, // 14: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
 	7,  // 15: quash_proto.QuashService.PushQueue:output_type -> quash_proto.PushIntoQueueResponse
 	9,  // 16: quash_proto.QuashService.PopQueue:output_type -> quash_proto.PopFromQueueResponse
 	10, // 17: quash_proto.QuashService.QueryQueueList:output_type -> quash_proto.QueueListResponse
