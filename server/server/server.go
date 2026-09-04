@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -32,6 +31,16 @@ type Server struct {
 func (s *Server) Init() {
 	go GarbageCollection()
 }
+
+// SetKV(context.Context, *SetKVRequest) (*SetKVResponse, error)
+// 	GetKV(context.Context, *GetKVRequest) (*GetKVResponse, error)
+// 	DeleteKV(context.Context, *DeleteKVRequest) (*DeleteKVResponse, error)
+// 	CreateTopic(context.Context, *CreateTopicRequest) (*CreateTopicResponse, error)
+// 	RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error)
+// 	AddSubscriber(*AddSubscriberRequest, grpc.ServerStreamingServer[AddSubscriberResponse]) error
+// 	Subscribe(grpc.BidiStreamingServer[SubscribeRequest, SubscribeResponse]) error
+// 	QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error)
+// 	QueryTopicMetric(*QueryTopicMetricRequest, grpc.ServerStreamingServer[QueueTopicMetricResponse]) error
 
 func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVResponse, error) {
 	log.Printf("SetKV, key=%v, value=%v,\n", kv.Key, kv.Value)
@@ -68,45 +77,24 @@ func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.Del
 	return &pb.DeleteKVResponse{Value: "OK"}, nil
 }
 
-func (s *Server) PushQueue(ctx context.Context, q *pb.PushIntoQueueRequest) (*pb.PushIntoQueueResponse, error) {
-	log.Printf("PushQueue, Queue Name=%v, Value=%v\n", q.QueueName, q.Value)
-	lock.Lock()
-	_, ok := queues[q.QueueName]
-	if !ok {
-		queues[q.QueueName] = queue.NewQueue()
-	}
-	queues[q.QueueName].Push(q.Value)
-	lock.Unlock()
-	return &pb.PushIntoQueueResponse{Response: "Pushed"}, nil
-}
-
-func (s *Server) PopQueue(q *pb.PopFromQueueRequest, stream grpc.ServerStreamingServer[pb.PopFromQueueResponse]) error {
-	log.Printf("PopQueue, Queue Name=%v\n", q.QueueName)
+// Publish(grpc.BidiStreamingServer[PublishRequest, PublishResponse]) error
+func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.PublishResponse]) error {
 	for {
-		lock.Lock()
-		q2, ok := queues[q.QueueName]
-		if !ok {
-			lock.Unlock()
-			return errors.New("queue doesn't exist")
-		}
-		if q2.Count() == 0 {
-			lock.Unlock()
-			select {
-			case <-stream.Context().Done():
-				// client disconnected while we were waiting; stop the goroutine
-				return stream.Context().Err()
-			case <-time.After(100 * time.Millisecond):
-			}
-			continue
-		}
-		first := q2.Pop()
-		lock.Unlock()
-
-		if err := stream.Send(&pb.PopFromQueueResponse{
-			Response: fmt.Sprintf("%v", first),
-		}); err != nil {
+		req, err := stream.Recv()
+		if err != nil {
 			return err
 		}
+		log.Printf("Publish, Topic Name=%v, Value=%v\n", req.TopicName, req.Value)
+	}
+}
+
+func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, pb.SubscribeResponse]) error {
+	for {
+		req, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		log.Printf("Subscribe, Topic Name=%v\n", req.TopicName)
 	}
 }
 

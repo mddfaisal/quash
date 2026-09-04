@@ -88,45 +88,12 @@ func DeleteTopic(ctx context.Context, req *quash_proto.RemoveTopicRequest) (*qua
 	return resp, err
 }
 
-func PushQueue(ctx context.Context, req *quash_proto.PushIntoQueueRequest) (*quash_proto.PushIntoQueueResponse, error) {
-	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer func() {
-		conn.Close()
-		lock.Unlock()
-	}()
-	if err != nil {
-		return nil, err
-	}
-	client := quash_proto.NewQuashServiceClient(conn)
-	resp, err := client.PushQueue(ctx, req)
-	return resp, err
+func Publish(ctx context.Context, req *quash_proto.PublishRequest) error {
+	return nil
 }
 
-func PopQueue(queueName string, data chan interface{}) error {
-	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer func() {
-		conn.Close()
-		lock.Unlock()
-	}()
-	if err != nil {
-		return err
-	}
-	client := quash_proto.NewQuashServiceClient(conn)
-	stream, err := client.PopQueue(context.Background(), &quash_proto.PopFromQueueRequest{
-		QueueName: queueName,
-	})
-	if err != nil {
-		return err
-	}
-	for {
-		resp, err := stream.Recv()
-		if err != nil {
-			return err
-		}
-		data <- resp.Response
-	}
+func Subscribe(topicName string, data chan interface{}) error {
+	return nil
 }
 
 func QueryTopicList(ctx context.Context, req *quash_proto.QueryTopicListRequest) (*quash_proto.QueueTopicListResponse, error) {

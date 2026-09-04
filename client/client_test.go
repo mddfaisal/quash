@@ -111,46 +111,6 @@ func Test_DeleteQueue(t *testing.T) {
 		})
 	}
 }
-func Test_PushQueue(t *testing.T) {
-	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
-		TopicName: "test_topic",
-	})
-	if err != nil {
-		t.Errorf("Error creating topic: %v", err)
-	}
-	tests := []struct {
-		name string
-		ctx  context.Context
-		req  *quash_proto.PushIntoQueueRequest
-		resp *quash_proto.PushIntoQueueResponse
-		err  error
-	}{
-		{
-			name: "Push to Queue",
-			ctx:  context.Background(),
-			req: &quash_proto.PushIntoQueueRequest{
-				QueueName: "test_queue",
-				Value:     "Hello, World!",
-			},
-			resp: &quash_proto.PushIntoQueueResponse{
-				Response: "Pushed",
-			},
-			err: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			resp, err := PushQueue(tt.ctx, tt.req)
-			if err != tt.err {
-				t.Errorf("Expected error: %v, got: %v", tt.err, err)
-			} else if resp.Response != tt.resp.Response {
-				t.Errorf("Expected response: %v, got: %v", tt.resp.Response, resp.Response)
-			} else {
-				t.Logf("Test passed with response: %v", resp.Response)
-			}
-		})
-	}
-}
 
 func Test_QueryQueueList(t *testing.T) {
 	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
@@ -190,39 +150,6 @@ func Test_QueryQueueList(t *testing.T) {
 				t.Logf("Test passed with topic list: %v", resp.TopicList)
 			}
 		})
-	}
-}
-
-func Test_PopQueue(t *testing.T) {
-	_, err := CreateTopic(context.Background(), &quash_proto.CreateTopicRequest{
-		TopicName: "test_topic",
-	})
-	if err != nil {
-		t.Errorf("Error creating topic: %v", err)
-	}
-	_, err = PushQueue(context.Background(), &quash_proto.PushIntoQueueRequest{
-		QueueName: "test_queue",
-		Value:     "Hello, World!",
-	})
-	if err != nil {
-		t.Errorf("Error pushing to queue: %v", err)
-	}
-	data := make(chan interface{})
-	go func() {
-		err := PopQueue("test_queue", data)
-		if err != nil {
-			t.Errorf("Error popping from queue: %v", err)
-		}
-	}()
-	select {
-	case resp := <-data:
-		if resp != "Hello, World!" {
-			t.Errorf("Expected response: %v, got: %v", "Hello, World!", resp)
-		} else {
-			t.Logf("Test passed with response: %v", resp)
-		}
-	case <-time.After(5 * time.Second):
-		t.Error("Test timed out while waiting for response")
 	}
 }
 

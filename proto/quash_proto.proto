@@ -31,20 +31,20 @@ message DeleteKVResponse {
     string value = 1;
 }
 
-message PushIntoQueueRequest {
-    string queue_name = 1;
+message PublishRequest {
+    string topic_name = 1;
     string value = 2;
 }
 
-message PushIntoQueueResponse {
+message PublishResponse {
     string response = 1; 
 }
 
-message PopFromQueueRequest {
-    string queue_name = 1;
+message SubscribeRequest {
+    string topic_name = 1;
 }
 
-message PopFromQueueResponse {
+message SubscribeResponse {
     string response = 1;
 }
 
@@ -76,6 +76,14 @@ message RemoveTopicResponse{
     string response = 1;
 }
 
+message AddSubscriberRequest{
+    string topic_name = 1;
+}
+
+message AddSubscriberResponse{
+    string response = 1;
+}
+
 service QuashService {
 
     rpc SetKV (SetKVRequest) returns (SetKVResponse);
@@ -84,9 +92,10 @@ service QuashService {
 
     rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
     rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
+    rpc AddSubscriber(AddSubscriberRequest) returns (stream AddSubscriberResponse);
 
-    rpc PushQueue (PushIntoQueueRequest) returns (PushIntoQueueResponse);
-    rpc PopQueue (PopFromQueueRequest) returns (stream PopFromQueueResponse);
+    rpc Publish (stream PublishRequest) returns (stream PublishResponse);
+    rpc Subscribe (stream SubscribeRequest) returns (stream SubscribeResponse);
 
     rpc QueryTopicList(QueryTopicListRequest) returns (QueueTopicListResponse);
     rpc QueryTopicMetric(QueryTopicMetricRequest) returns (stream QueueTopicMetricResponse);
