@@ -408,6 +408,7 @@ func (x *PublishResponse) GetResponse() string {
 type SubscribeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TopicName     string                 `protobuf:"bytes,1,opt,name=topic_name,json=topicName,proto3" json:"topic_name,omitempty"`
+	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriber_id,json=subscriberId,proto3" json:"subscriber_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -445,6 +446,13 @@ func (*SubscribeRequest) Descriptor() ([]byte, []int) {
 func (x *SubscribeRequest) GetTopicName() string {
 	if x != nil {
 		return x.TopicName
+	}
+	return ""
+}
+
+func (x *SubscribeRequest) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
 	}
 	return ""
 }
@@ -537,16 +545,60 @@ func (x *QueueTopicListResponse) GetTopicList() []string {
 	return nil
 }
 
-type QueueTopicMetricResponse struct {
+type QueueMetric struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	QueueMetric   map[string]int64       `protobuf:"bytes,1,rep,name=queue_metric,json=queueMetric,proto3" json:"queue_metric,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *QueueMetric) Reset() {
+	*x = QueueMetric{}
+	mi := &file_quash_proto_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QueueMetric) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueueMetric) ProtoMessage() {}
+
+func (x *QueueMetric) ProtoReflect() protoreflect.Message {
+	mi := &file_quash_proto_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueueMetric.ProtoReflect.Descriptor instead.
+func (*QueueMetric) Descriptor() ([]byte, []int) {
+	return file_quash_proto_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *QueueMetric) GetQueueMetric() map[string]int64 {
+	if x != nil {
+		return x.QueueMetric
+	}
+	return nil
+}
+
+type QueueTopicMetricResponse struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	QueueMetric   map[string]*QueueMetric `protobuf:"bytes,1,rep,name=queue_metric,json=queueMetric,proto3" json:"queue_metric,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
 func (x *QueueTopicMetricResponse) Reset() {
 	*x = QueueTopicMetricResponse{}
-	mi := &file_quash_proto_proto_msgTypes[11]
+	mi := &file_quash_proto_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -558,7 +610,7 @@ func (x *QueueTopicMetricResponse) String() string {
 func (*QueueTopicMetricResponse) ProtoMessage() {}
 
 func (x *QueueTopicMetricResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[11]
+	mi := &file_quash_proto_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,10 +623,10 @@ func (x *QueueTopicMetricResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueueTopicMetricResponse.ProtoReflect.Descriptor instead.
 func (*QueueTopicMetricResponse) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{11}
+	return file_quash_proto_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *QueueTopicMetricResponse) GetQueueMetric() map[string]int64 {
+func (x *QueueTopicMetricResponse) GetQueueMetric() map[string]*QueueMetric {
 	if x != nil {
 		return x.QueueMetric
 	}
@@ -589,7 +641,7 @@ type QueryTopicListRequest struct {
 
 func (x *QueryTopicListRequest) Reset() {
 	*x = QueryTopicListRequest{}
-	mi := &file_quash_proto_proto_msgTypes[12]
+	mi := &file_quash_proto_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -601,7 +653,7 @@ func (x *QueryTopicListRequest) String() string {
 func (*QueryTopicListRequest) ProtoMessage() {}
 
 func (x *QueryTopicListRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[12]
+	mi := &file_quash_proto_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -614,7 +666,7 @@ func (x *QueryTopicListRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTopicListRequest.ProtoReflect.Descriptor instead.
 func (*QueryTopicListRequest) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{12}
+	return file_quash_proto_proto_rawDescGZIP(), []int{13}
 }
 
 type QueryTopicMetricRequest struct {
@@ -625,7 +677,7 @@ type QueryTopicMetricRequest struct {
 
 func (x *QueryTopicMetricRequest) Reset() {
 	*x = QueryTopicMetricRequest{}
-	mi := &file_quash_proto_proto_msgTypes[13]
+	mi := &file_quash_proto_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +689,7 @@ func (x *QueryTopicMetricRequest) String() string {
 func (*QueryTopicMetricRequest) ProtoMessage() {}
 
 func (x *QueryTopicMetricRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[13]
+	mi := &file_quash_proto_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +702,7 @@ func (x *QueryTopicMetricRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTopicMetricRequest.ProtoReflect.Descriptor instead.
 func (*QueryTopicMetricRequest) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{13}
+	return file_quash_proto_proto_rawDescGZIP(), []int{14}
 }
 
 type CreateTopicRequest struct {
@@ -662,7 +714,7 @@ type CreateTopicRequest struct {
 
 func (x *CreateTopicRequest) Reset() {
 	*x = CreateTopicRequest{}
-	mi := &file_quash_proto_proto_msgTypes[14]
+	mi := &file_quash_proto_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -674,7 +726,7 @@ func (x *CreateTopicRequest) String() string {
 func (*CreateTopicRequest) ProtoMessage() {}
 
 func (x *CreateTopicRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[14]
+	mi := &file_quash_proto_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -687,7 +739,7 @@ func (x *CreateTopicRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTopicRequest.ProtoReflect.Descriptor instead.
 func (*CreateTopicRequest) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{14}
+	return file_quash_proto_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateTopicRequest) GetTopicName() string {
@@ -706,7 +758,7 @@ type CreateTopicResponse struct {
 
 func (x *CreateTopicResponse) Reset() {
 	*x = CreateTopicResponse{}
-	mi := &file_quash_proto_proto_msgTypes[15]
+	mi := &file_quash_proto_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -718,7 +770,7 @@ func (x *CreateTopicResponse) String() string {
 func (*CreateTopicResponse) ProtoMessage() {}
 
 func (x *CreateTopicResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[15]
+	mi := &file_quash_proto_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -731,7 +783,7 @@ func (x *CreateTopicResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTopicResponse.ProtoReflect.Descriptor instead.
 func (*CreateTopicResponse) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{15}
+	return file_quash_proto_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateTopicResponse) GetResponse() string {
@@ -750,7 +802,7 @@ type RemoveTopicRequest struct {
 
 func (x *RemoveTopicRequest) Reset() {
 	*x = RemoveTopicRequest{}
-	mi := &file_quash_proto_proto_msgTypes[16]
+	mi := &file_quash_proto_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -762,7 +814,7 @@ func (x *RemoveTopicRequest) String() string {
 func (*RemoveTopicRequest) ProtoMessage() {}
 
 func (x *RemoveTopicRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[16]
+	mi := &file_quash_proto_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -775,7 +827,7 @@ func (x *RemoveTopicRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTopicRequest.ProtoReflect.Descriptor instead.
 func (*RemoveTopicRequest) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{16}
+	return file_quash_proto_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RemoveTopicRequest) GetTopicName() string {
@@ -794,7 +846,7 @@ type RemoveTopicResponse struct {
 
 func (x *RemoveTopicResponse) Reset() {
 	*x = RemoveTopicResponse{}
-	mi := &file_quash_proto_proto_msgTypes[17]
+	mi := &file_quash_proto_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -806,7 +858,7 @@ func (x *RemoveTopicResponse) String() string {
 func (*RemoveTopicResponse) ProtoMessage() {}
 
 func (x *RemoveTopicResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[17]
+	mi := &file_quash_proto_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +871,7 @@ func (x *RemoveTopicResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTopicResponse.ProtoReflect.Descriptor instead.
 func (*RemoveTopicResponse) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{17}
+	return file_quash_proto_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RemoveTopicResponse) GetResponse() string {
@@ -838,7 +890,7 @@ type AddSubscriberRequest struct {
 
 func (x *AddSubscriberRequest) Reset() {
 	*x = AddSubscriberRequest{}
-	mi := &file_quash_proto_proto_msgTypes[18]
+	mi := &file_quash_proto_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +902,7 @@ func (x *AddSubscriberRequest) String() string {
 func (*AddSubscriberRequest) ProtoMessage() {}
 
 func (x *AddSubscriberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[18]
+	mi := &file_quash_proto_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +915,7 @@ func (x *AddSubscriberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSubscriberRequest.ProtoReflect.Descriptor instead.
 func (*AddSubscriberRequest) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{18}
+	return file_quash_proto_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AddSubscriberRequest) GetTopicName() string {
@@ -876,13 +928,14 @@ func (x *AddSubscriberRequest) GetTopicName() string {
 type AddSubscriberResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
+	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriber_id,json=subscriberId,proto3" json:"subscriber_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddSubscriberResponse) Reset() {
 	*x = AddSubscriberResponse{}
-	mi := &file_quash_proto_proto_msgTypes[19]
+	mi := &file_quash_proto_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -894,7 +947,7 @@ func (x *AddSubscriberResponse) String() string {
 func (*AddSubscriberResponse) ProtoMessage() {}
 
 func (x *AddSubscriberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_quash_proto_proto_msgTypes[19]
+	mi := &file_quash_proto_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -907,12 +960,19 @@ func (x *AddSubscriberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSubscriberResponse.ProtoReflect.Descriptor instead.
 func (*AddSubscriberResponse) Descriptor() ([]byte, []int) {
-	return file_quash_proto_proto_rawDescGZIP(), []int{19}
+	return file_quash_proto_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *AddSubscriberResponse) GetResponse() string {
 	if x != nil {
 		return x.Response
+	}
+	return ""
+}
+
+func (x *AddSubscriberResponse) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
 	}
 	return ""
 }
@@ -942,20 +1002,26 @@ const file_quash_proto_proto_rawDesc = "" +
 	"topic_name\x18\x01 \x01(\tR\ttopicName\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"-\n" +
 	"\x0fPublishResponse\x12\x1a\n" +
-	"\bresponse\x18\x01 \x01(\tR\bresponse\"1\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse\"V\n" +
 	"\x10SubscribeRequest\x12\x1d\n" +
 	"\n" +
-	"topic_name\x18\x01 \x01(\tR\ttopicName\"/\n" +
+	"topic_name\x18\x01 \x01(\tR\ttopicName\x12#\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId\"/\n" +
 	"\x11SubscribeResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"7\n" +
 	"\x16QueueTopicListResponse\x12\x1d\n" +
 	"\n" +
-	"topic_list\x18\x01 \x03(\tR\ttopicList\"\xb5\x01\n" +
-	"\x18QueueTopicMetricResponse\x12Y\n" +
-	"\fqueue_metric\x18\x01 \x03(\v26.quash_proto.QueueTopicMetricResponse.QueueMetricEntryR\vqueueMetric\x1a>\n" +
+	"topic_list\x18\x01 \x03(\tR\ttopicList\"\x9b\x01\n" +
+	"\vQueueMetric\x12L\n" +
+	"\fqueue_metric\x18\x01 \x03(\v2).quash_proto.QueueMetric.QueueMetricEntryR\vqueueMetric\x1a>\n" +
 	"\x10QueueMetricEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\x17\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xcf\x01\n" +
+	"\x18QueueTopicMetricResponse\x12Y\n" +
+	"\fqueue_metric\x18\x01 \x03(\v26.quash_proto.QueueTopicMetricResponse.QueueMetricEntryR\vqueueMetric\x1aX\n" +
+	"\x10QueueMetricEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
+	"\x05value\x18\x02 \x01(\v2\x18.quash_proto.QueueMetricR\x05value:\x028\x01\"\x17\n" +
 	"\x15QueryTopicListRequest\"\x19\n" +
 	"\x17QueryTopicMetricRequest\"3\n" +
 	"\x12CreateTopicRequest\x12\x1d\n" +
@@ -970,16 +1036,17 @@ const file_quash_proto_proto_rawDesc = "" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"5\n" +
 	"\x14AddSubscriberRequest\x12\x1d\n" +
 	"\n" +
-	"topic_name\x18\x01 \x01(\tR\ttopicName\"3\n" +
+	"topic_name\x18\x01 \x01(\tR\ttopicName\"X\n" +
 	"\x15AddSubscriberResponse\x12\x1a\n" +
-	"\bresponse\x18\x01 \x01(\tR\bresponse2\xad\x06\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse\x12#\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId2\xab\x06\n" +
 	"\fQuashService\x12>\n" +
 	"\x05SetKV\x12\x19.quash_proto.SetKVRequest\x1a\x1a.quash_proto.SetKVResponse\x12>\n" +
 	"\x05GetKV\x12\x19.quash_proto.GetKVRequest\x1a\x1a.quash_proto.GetKVResponse\x12G\n" +
 	"\bDeleteKV\x12\x1c.quash_proto.DeleteKVRequest\x1a\x1d.quash_proto.DeleteKVResponse\x12P\n" +
 	"\vCreateTopic\x12\x1f.quash_proto.CreateTopicRequest\x1a .quash_proto.CreateTopicResponse\x12P\n" +
-	"\vRemoveTopic\x12\x1f.quash_proto.RemoveTopicRequest\x1a .quash_proto.RemoveTopicResponse\x12X\n" +
-	"\rAddSubscriber\x12!.quash_proto.AddSubscriberRequest\x1a\".quash_proto.AddSubscriberResponse0\x01\x12H\n" +
+	"\vRemoveTopic\x12\x1f.quash_proto.RemoveTopicRequest\x1a .quash_proto.RemoveTopicResponse\x12V\n" +
+	"\rAddSubscriber\x12!.quash_proto.AddSubscriberRequest\x1a\".quash_proto.AddSubscriberResponse\x12H\n" +
 	"\aPublish\x12\x1b.quash_proto.PublishRequest\x1a\x1c.quash_proto.PublishResponse(\x010\x01\x12N\n" +
 	"\tSubscribe\x12\x1d.quash_proto.SubscribeRequest\x1a\x1e.quash_proto.SubscribeResponse(\x010\x01\x12Y\n" +
 	"\x0eQueryTopicList\x12\".quash_proto.QueryTopicListRequest\x1a#.quash_proto.QueueTopicListResponse\x12a\n" +
@@ -997,7 +1064,7 @@ func file_quash_proto_proto_rawDescGZIP() []byte {
 	return file_quash_proto_proto_rawDescData
 }
 
-var file_quash_proto_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_quash_proto_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_quash_proto_proto_goTypes = []any{
 	(*SetKVRequest)(nil),             // 0: quash_proto.SetKVRequest
 	(*SetKVResponse)(nil),            // 1: quash_proto.SetKVResponse
@@ -1010,44 +1077,48 @@ var file_quash_proto_proto_goTypes = []any{
 	(*SubscribeRequest)(nil),         // 8: quash_proto.SubscribeRequest
 	(*SubscribeResponse)(nil),        // 9: quash_proto.SubscribeResponse
 	(*QueueTopicListResponse)(nil),   // 10: quash_proto.QueueTopicListResponse
-	(*QueueTopicMetricResponse)(nil), // 11: quash_proto.QueueTopicMetricResponse
-	(*QueryTopicListRequest)(nil),    // 12: quash_proto.QueryTopicListRequest
-	(*QueryTopicMetricRequest)(nil),  // 13: quash_proto.QueryTopicMetricRequest
-	(*CreateTopicRequest)(nil),       // 14: quash_proto.CreateTopicRequest
-	(*CreateTopicResponse)(nil),      // 15: quash_proto.CreateTopicResponse
-	(*RemoveTopicRequest)(nil),       // 16: quash_proto.RemoveTopicRequest
-	(*RemoveTopicResponse)(nil),      // 17: quash_proto.RemoveTopicResponse
-	(*AddSubscriberRequest)(nil),     // 18: quash_proto.AddSubscriberRequest
-	(*AddSubscriberResponse)(nil),    // 19: quash_proto.AddSubscriberResponse
-	nil,                              // 20: quash_proto.QueueTopicMetricResponse.QueueMetricEntry
+	(*QueueMetric)(nil),              // 11: quash_proto.QueueMetric
+	(*QueueTopicMetricResponse)(nil), // 12: quash_proto.QueueTopicMetricResponse
+	(*QueryTopicListRequest)(nil),    // 13: quash_proto.QueryTopicListRequest
+	(*QueryTopicMetricRequest)(nil),  // 14: quash_proto.QueryTopicMetricRequest
+	(*CreateTopicRequest)(nil),       // 15: quash_proto.CreateTopicRequest
+	(*CreateTopicResponse)(nil),      // 16: quash_proto.CreateTopicResponse
+	(*RemoveTopicRequest)(nil),       // 17: quash_proto.RemoveTopicRequest
+	(*RemoveTopicResponse)(nil),      // 18: quash_proto.RemoveTopicResponse
+	(*AddSubscriberRequest)(nil),     // 19: quash_proto.AddSubscriberRequest
+	(*AddSubscriberResponse)(nil),    // 20: quash_proto.AddSubscriberResponse
+	nil,                              // 21: quash_proto.QueueMetric.QueueMetricEntry
+	nil,                              // 22: quash_proto.QueueTopicMetricResponse.QueueMetricEntry
 }
 var file_quash_proto_proto_depIdxs = []int32{
-	20, // 0: quash_proto.QueueTopicMetricResponse.queue_metric:type_name -> quash_proto.QueueTopicMetricResponse.QueueMetricEntry
-	0,  // 1: quash_proto.QuashService.SetKV:input_type -> quash_proto.SetKVRequest
-	2,  // 2: quash_proto.QuashService.GetKV:input_type -> quash_proto.GetKVRequest
-	4,  // 3: quash_proto.QuashService.DeleteKV:input_type -> quash_proto.DeleteKVRequest
-	14, // 4: quash_proto.QuashService.CreateTopic:input_type -> quash_proto.CreateTopicRequest
-	16, // 5: quash_proto.QuashService.RemoveTopic:input_type -> quash_proto.RemoveTopicRequest
-	18, // 6: quash_proto.QuashService.AddSubscriber:input_type -> quash_proto.AddSubscriberRequest
-	6,  // 7: quash_proto.QuashService.Publish:input_type -> quash_proto.PublishRequest
-	8,  // 8: quash_proto.QuashService.Subscribe:input_type -> quash_proto.SubscribeRequest
-	12, // 9: quash_proto.QuashService.QueryTopicList:input_type -> quash_proto.QueryTopicListRequest
-	13, // 10: quash_proto.QuashService.QueryTopicMetric:input_type -> quash_proto.QueryTopicMetricRequest
-	1,  // 11: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
-	3,  // 12: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
-	5,  // 13: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
-	15, // 14: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
-	17, // 15: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
-	19, // 16: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
-	7,  // 17: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
-	9,  // 18: quash_proto.QuashService.Subscribe:output_type -> quash_proto.SubscribeResponse
-	10, // 19: quash_proto.QuashService.QueryTopicList:output_type -> quash_proto.QueueTopicListResponse
-	11, // 20: quash_proto.QuashService.QueryTopicMetric:output_type -> quash_proto.QueueTopicMetricResponse
-	11, // [11:21] is the sub-list for method output_type
-	1,  // [1:11] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	21, // 0: quash_proto.QueueMetric.queue_metric:type_name -> quash_proto.QueueMetric.QueueMetricEntry
+	22, // 1: quash_proto.QueueTopicMetricResponse.queue_metric:type_name -> quash_proto.QueueTopicMetricResponse.QueueMetricEntry
+	11, // 2: quash_proto.QueueTopicMetricResponse.QueueMetricEntry.value:type_name -> quash_proto.QueueMetric
+	0,  // 3: quash_proto.QuashService.SetKV:input_type -> quash_proto.SetKVRequest
+	2,  // 4: quash_proto.QuashService.GetKV:input_type -> quash_proto.GetKVRequest
+	4,  // 5: quash_proto.QuashService.DeleteKV:input_type -> quash_proto.DeleteKVRequest
+	15, // 6: quash_proto.QuashService.CreateTopic:input_type -> quash_proto.CreateTopicRequest
+	17, // 7: quash_proto.QuashService.RemoveTopic:input_type -> quash_proto.RemoveTopicRequest
+	19, // 8: quash_proto.QuashService.AddSubscriber:input_type -> quash_proto.AddSubscriberRequest
+	6,  // 9: quash_proto.QuashService.Publish:input_type -> quash_proto.PublishRequest
+	8,  // 10: quash_proto.QuashService.Subscribe:input_type -> quash_proto.SubscribeRequest
+	13, // 11: quash_proto.QuashService.QueryTopicList:input_type -> quash_proto.QueryTopicListRequest
+	14, // 12: quash_proto.QuashService.QueryTopicMetric:input_type -> quash_proto.QueryTopicMetricRequest
+	1,  // 13: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
+	3,  // 14: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
+	5,  // 15: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
+	16, // 16: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
+	18, // 17: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
+	20, // 18: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
+	7,  // 19: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
+	9,  // 20: quash_proto.QuashService.Subscribe:output_type -> quash_proto.SubscribeResponse
+	10, // 21: quash_proto.QuashService.QueryTopicList:output_type -> quash_proto.QueueTopicListResponse
+	12, // 22: quash_proto.QuashService.QueryTopicMetric:output_type -> quash_proto.QueueTopicMetricResponse
+	13, // [13:23] is the sub-list for method output_type
+	3,  // [3:13] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_quash_proto_proto_init() }
@@ -1061,7 +1132,7 @@ func file_quash_proto_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quash_proto_proto_rawDesc), len(file_quash_proto_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

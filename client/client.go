@@ -3,10 +3,11 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 
-	"github.com/mddfaisal/quash/config"
 	quash_proto "github.com/mddfaisal/quash/proto"
+	"github.com/mddfaisal/quash/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -15,7 +16,7 @@ var lock = &sync.Mutex{}
 
 func SetKV(ctx context.Context, req *quash_proto.SetKVRequest) (*quash_proto.SetKVResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -30,7 +31,7 @@ func SetKV(ctx context.Context, req *quash_proto.SetKVRequest) (*quash_proto.Set
 
 func GetKV(ctx context.Context, req *quash_proto.GetKVRequest) (*quash_proto.GetKVResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -45,7 +46,7 @@ func GetKV(ctx context.Context, req *quash_proto.GetKVRequest) (*quash_proto.Get
 
 func DeleteKV(ctx context.Context, req *quash_proto.DeleteKVRequest) (*quash_proto.DeleteKVResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -60,7 +61,7 @@ func DeleteKV(ctx context.Context, req *quash_proto.DeleteKVRequest) (*quash_pro
 
 func CreateTopic(ctx context.Context, req *quash_proto.CreateTopicRequest) (*quash_proto.CreateTopicResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -75,7 +76,7 @@ func CreateTopic(ctx context.Context, req *quash_proto.CreateTopicRequest) (*qua
 
 func DeleteTopic(ctx context.Context, req *quash_proto.RemoveTopicRequest) (*quash_proto.RemoveTopicResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -88,17 +89,104 @@ func DeleteTopic(ctx context.Context, req *quash_proto.RemoveTopicRequest) (*qua
 	return resp, err
 }
 
-func Publish(ctx context.Context, req *quash_proto.PublishRequest) error {
-	return nil
+func Publish(topicName string, req, resp chan string) error {
+	lock.Lock()
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		lock.Unlock()
+		return err
+	}
+	defer func() {
+		conn.Close()
+		lock.Unlock()
+	}()
+	client := quash_proto.NewQuashServiceClient(conn)
+	stream, err := client.Publish(context.Background())
+	if err != nil {
+		return err
+	}
+	for r := range req {
+		err := stream.Send(&quash_proto.PublishRequest{
+			TopicName: topicName,
+			Value:     r,
+		})
+		if err != nil {
+			return err
+		}
+		published, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			resp <- published.Response
+		}
+	}
+	if err := stream.CloseSend(); err != nil {
+		return err
+	}
+	for {
+		_, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+	}
 }
 
-func Subscribe(topicName string, data chan interface{}) error {
-	return nil
+func Subscribe(topicName string, req, resp chan string) error {
+	lock.Lock()
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		lock.Unlock()
+		return err
+	}
+	defer func() {
+		conn.Close()
+		lock.Unlock()
+	}()
+	client := quash_proto.NewQuashServiceClient(conn)
+	stream, err := client.Subscribe(context.Background())
+	if err != nil {
+		return err
+	}
+	for r := range req {
+		err := stream.Send(&quash_proto.SubscribeRequest{
+			TopicName:    topicName,
+			SubscriberId: r,
+		})
+		if err != nil {
+			return err
+		}
+		subscribed, err := stream.Recv()
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			resp <- subscribed.Response
+		}
+	}
+	if err := stream.CloseSend(); err != nil {
+		return err
+	}
+	for {
+		subscription, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if resp != nil {
+			resp <- subscription.Response
+		}
+	}
 }
 
 func QueryTopicList(ctx context.Context, req *quash_proto.QueryTopicListRequest) (*quash_proto.QueueTopicListResponse, error) {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()
@@ -113,7 +201,7 @@ func QueryTopicList(ctx context.Context, req *quash_proto.QueryTopicListRequest)
 
 func QueryTopicMetric(data chan *quash_proto.QueueTopicMetricResponse) error {
 	lock.Lock()
-	conn, err := grpc.Dial(config.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer func() {
 		conn.Close()
 		lock.Unlock()

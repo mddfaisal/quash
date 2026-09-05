@@ -40,7 +40,7 @@ type QuashServiceClient interface {
 	DeleteKV(ctx context.Context, in *DeleteKVRequest, opts ...grpc.CallOption) (*DeleteKVResponse, error)
 	CreateTopic(ctx context.Context, in *CreateTopicRequest, opts ...grpc.CallOption) (*CreateTopicResponse, error)
 	RemoveTopic(ctx context.Context, in *RemoveTopicRequest, opts ...grpc.CallOption) (*RemoveTopicResponse, error)
-	AddSubscriber(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AddSubscriberResponse], error)
+	AddSubscriber(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error)
 	Publish(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PublishRequest, PublishResponse], error)
 	Subscribe(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[SubscribeRequest, SubscribeResponse], error)
 	QueryTopicList(ctx context.Context, in *QueryTopicListRequest, opts ...grpc.CallOption) (*QueueTopicListResponse, error)
@@ -105,28 +105,19 @@ func (c *quashServiceClient) RemoveTopic(ctx context.Context, in *RemoveTopicReq
 	return out, nil
 }
 
-func (c *quashServiceClient) AddSubscriber(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[AddSubscriberResponse], error) {
+func (c *quashServiceClient) AddSubscriber(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[0], QuashService_AddSubscriber_FullMethodName, cOpts...)
+	out := new(AddSubscriberResponse)
+	err := c.cc.Invoke(ctx, QuashService_AddSubscriber_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[AddSubscriberRequest, AddSubscriberResponse]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_AddSubscriberClient = grpc.ServerStreamingClient[AddSubscriberResponse]
 
 func (c *quashServiceClient) Publish(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PublishRequest, PublishResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[1], QuashService_Publish_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[0], QuashService_Publish_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +130,7 @@ type QuashService_PublishClient = grpc.BidiStreamingClient[PublishRequest, Publi
 
 func (c *quashServiceClient) Subscribe(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[SubscribeRequest, SubscribeResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[2], QuashService_Subscribe_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[1], QuashService_Subscribe_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +153,7 @@ func (c *quashServiceClient) QueryTopicList(ctx context.Context, in *QueryTopicL
 
 func (c *quashServiceClient) QueryTopicMetric(ctx context.Context, in *QueryTopicMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueTopicMetricResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[3], QuashService_QueryTopicMetric_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[2], QuashService_QueryTopicMetric_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +179,7 @@ type QuashServiceServer interface {
 	DeleteKV(context.Context, *DeleteKVRequest) (*DeleteKVResponse, error)
 	CreateTopic(context.Context, *CreateTopicRequest) (*CreateTopicResponse, error)
 	RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error)
-	AddSubscriber(*AddSubscriberRequest, grpc.ServerStreamingServer[AddSubscriberResponse]) error
+	AddSubscriber(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error)
 	Publish(grpc.BidiStreamingServer[PublishRequest, PublishResponse]) error
 	Subscribe(grpc.BidiStreamingServer[SubscribeRequest, SubscribeResponse]) error
 	QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error)
@@ -218,8 +209,8 @@ func (UnimplementedQuashServiceServer) CreateTopic(context.Context, *CreateTopic
 func (UnimplementedQuashServiceServer) RemoveTopic(context.Context, *RemoveTopicRequest) (*RemoveTopicResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveTopic not implemented")
 }
-func (UnimplementedQuashServiceServer) AddSubscriber(*AddSubscriberRequest, grpc.ServerStreamingServer[AddSubscriberResponse]) error {
-	return status.Error(codes.Unimplemented, "method AddSubscriber not implemented")
+func (UnimplementedQuashServiceServer) AddSubscriber(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddSubscriber not implemented")
 }
 func (UnimplementedQuashServiceServer) Publish(grpc.BidiStreamingServer[PublishRequest, PublishResponse]) error {
 	return status.Error(codes.Unimplemented, "method Publish not implemented")
@@ -344,16 +335,23 @@ func _QuashService_RemoveTopic_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _QuashService_AddSubscriber_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(AddSubscriberRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _QuashService_AddSubscriber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSubscriberRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(QuashServiceServer).AddSubscriber(m, &grpc.GenericServerStream[AddSubscriberRequest, AddSubscriberResponse]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(QuashServiceServer).AddSubscriber(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: QuashService_AddSubscriber_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QuashServiceServer).AddSubscriber(ctx, req.(*AddSubscriberRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_AddSubscriberServer = grpc.ServerStreamingServer[AddSubscriberResponse]
 
 func _QuashService_Publish_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(QuashServiceServer).Publish(&grpc.GenericServerStream[PublishRequest, PublishResponse]{ServerStream: stream})
@@ -426,16 +424,15 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _QuashService_RemoveTopic_Handler,
 		},
 		{
+			MethodName: "AddSubscriber",
+			Handler:    _QuashService_AddSubscriber_Handler,
+		},
+		{
 			MethodName: "QueryTopicList",
 			Handler:    _QuashService_QueryTopicList_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "AddSubscriber",
-			Handler:       _QuashService_AddSubscriber_Handler,
-			ServerStreams: true,
-		},
 		{
 			StreamName:    "Publish",
 			Handler:       _QuashService_Publish_Handler,

@@ -4,21 +4,20 @@ import (
 	"net"
 
 	"github.com/mddfaisal/quash/admin"
-	"github.com/mddfaisal/quash/config"
 	pb "github.com/mddfaisal/quash/proto"
+	"github.com/mddfaisal/quash/server/quashserver"
+	"github.com/mddfaisal/quash/utils"
 	"google.golang.org/grpc"
-
-	"github.com/mddfaisal/quash/server/server"
 )
 
 var (
 	srv      = grpc.NewServer()
-	quashSrv = &server.Server{}
+	quashSrv = &quashserver.Server{}
 )
 
 func Serve() {
 	go admin.AdminServer()
-	lis, err := net.Listen("tcp", config.QuashDb)
+	lis, err := net.Listen("tcp", utils.QuashDb)
 	if err != nil {
 		panic(err)
 	}
