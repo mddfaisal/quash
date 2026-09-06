@@ -81,7 +81,6 @@ func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*
 	}
 	brokers[topic(req.TopicName)] = map[subscription_id]*queue.Queue{}
 	log.Printf("CreateTopic, Topic Name=%v\n", req.TopicName)
-	lock.Unlock()
 	return &pb.CreateTopicResponse{Response: "Topic created: " + fmt.Sprintf("%s", req.TopicName)}, nil
 }
 
@@ -111,6 +110,7 @@ func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest
 
 func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.PublishResponse]) error {
 	for {
+		lock.Lock()
 		req, err := stream.Recv()
 		if err != nil {
 			return err
@@ -129,6 +129,7 @@ func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.P
 			panic(err)
 		}
 		log.Printf("Publish, Topic Name=%v, Value=%v\n", req.TopicName, req.Value)
+		lock.Unlock()
 	}
 }
 

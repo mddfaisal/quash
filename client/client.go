@@ -89,6 +89,21 @@ func DeleteTopic(ctx context.Context, req *quash_proto.RemoveTopicRequest) (*qua
 	return resp, err
 }
 
+func AddSubscriber(ctx context.Context, req *quash_proto.AddSubscriberRequest) (*quash_proto.AddSubscriberResponse, error) {
+	lock.Lock()
+	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	defer func() {
+		conn.Close()
+		lock.Unlock()
+	}()
+	if err != nil {
+		return nil, err
+	}
+	client := quash_proto.NewQuashServiceClient(conn)
+	resp, err := client.AddSubscriber(ctx, req)
+	return resp, err
+}
+
 func Publish(topicName string, req, resp chan string) error {
 	lock.Lock()
 	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))

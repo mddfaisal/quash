@@ -1,9 +1,5 @@
 package queue
 
-import "sync"
-
-var lock = &sync.Mutex{}
-
 type Node struct {
 	Element string
 	Next    *Node
@@ -15,8 +11,6 @@ type Queue struct {
 }
 
 func NewQueue() *Queue {
-	lock.Lock()
-	defer lock.Unlock()
 	q := &Queue{
 		Root:    nil,
 		Counter: 0,
@@ -25,8 +19,6 @@ func NewQueue() *Queue {
 }
 
 func (q *Queue) Push(i string) {
-	lock.Lock()
-	defer lock.Unlock()
 	q.Counter++
 	nd := &Node{Element: i, Next: nil}
 	if q.Root == nil {
@@ -41,8 +33,6 @@ func (q *Queue) Push(i string) {
 }
 
 func (q *Queue) Pop() string {
-	lock.Lock()
-	defer lock.Unlock()
 	first := q.Root.Element
 	q.Root = q.Root.Next
 	q.Counter--
@@ -50,7 +40,5 @@ func (q *Queue) Pop() string {
 }
 
 func (q *Queue) Count() int64 {
-	lock.Lock()
-	defer lock.Unlock()
 	return q.Counter
 }
