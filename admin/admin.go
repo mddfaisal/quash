@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/mddfaisal/quash/config"
 	pb "github.com/mddfaisal/quash/proto"
+	"github.com/mddfaisal/quash/utils"
 	"google.golang.org/grpc"
 )
 
@@ -73,7 +73,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	grpcConn, err := grpc.Dial("0.0.0.0:6300", grpc.WithInsecure())
+	grpcConn, err := grpc.Dial(utils.QuashDb, grpc.WithInsecure())
 	if err != nil {
 		log.Println("grpc dial error:", err)
 		return
@@ -110,6 +110,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 func AdminServer() {
 	http.HandleFunc("/ws/admin", websocketHandler)
 	http.HandleFunc("/", indexHandler)
-	log.Println("admin server listening on", config.QuashTelemetry)
-	http.ListenAndServe(config.QuashTelemetry, nil)
+	log.Println("admin server listening on", utils.QuashTelemetry)
+	http.ListenAndServe(utils.QuashTelemetry, nil)
 }
