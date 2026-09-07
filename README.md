@@ -40,7 +40,7 @@
     subscriber's private mailbox)
 ```
 
-Internally, each topic holds a map of `subscriber ID → *queue.Queue`. `Publish` pushes a value onto **every** subscriber's queue for that topic (broadcast); `Subscribe` reads off one subscriber's own queue. The admin dashboard doesn't touch server state directly — it dials the gRPC server as a regular client and re-broadcasts `QueryTopicMetric` over a WebSocket to the browser.
+Internally, each topic holds a map of `subscriber ID → *queue.Queue`. `Publish` pushes a value onto **every** subscriber's queue for that topic (broadcast); `Subscribe` waits for and reads off one subscriber's own queue. The admin dashboard doesn't touch server state directly — it dials the gRPC server as a regular client and re-broadcasts `QueryTopicMetric` over a WebSocket to the browser.
 
 ## Project structure
 
@@ -120,9 +120,9 @@ Full definitions live in `proto/quash_proto.proto`.
 | `DeleteKV` | unary | Delete a key |
 | `CreateTopic` | unary | Create a named topic |
 | `RemoveTopic` | unary | Delete a topic |
-| `AddSubscriber` | unary | Register a new subscriber on a topic; returns a `subscriber_id` |
+| `AddSubscriber` | unary | Register a new subscriber on an existing topic; returns a `subscriber_id` |
 | `Publish` | bidi-streaming | Send values to a topic; every current subscriber receives a copy |
-| `Subscribe` | bidi-streaming | Pull values for a given `subscriber_id` on a topic |
+| `Subscribe` | bidi-streaming | Wait for and pull the next value for a given `subscriber_id` on a topic |
 | `QueryTopicList` | unary | List all topic names |
 | `QueryTopicMetric` | server-streaming | Stream `{topic → {subscriber_count}}` snapshots |
 
@@ -185,9 +185,7 @@ protoc --go_out=. --go-grpc_out=. proto/quash_proto.proto
 - Single-node, in-memory only — no persistence or durability across restarts
 - No authentication/authorization or multi-tenancy
 - `server/queue` is not thread-safe on its own; correctness currently depends on every caller holding the shared server-level lock
-- `Subscribe` can panic if it pops from a subscriber's queue before anything has been published to it — avoid calling `Subscribe` until at least one `Publish` has occurred, until this is fixed server-side
-- `AddSubscriber` currently resets a topic's subscriber map each time it's called, so adding a second subscriber can drop the first — treat multi-subscriber topics as unstable for now
-- `Publish` holds the server's global lock while waiting to receive the next message on the stream, which can stall unrelated KV/topic operations while a publish stream is idle
+- `QueryTopicMetric` only reports subscriber counts per topic, not per-subscriber queue depth
 
 ## Contributing
 

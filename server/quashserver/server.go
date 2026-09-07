@@ -81,7 +81,7 @@ func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*
 	}
 	brokers[topic(req.TopicName)] = map[subscription_id]*queue.Queue{}
 	log.Printf("CreateTopic, Topic Name=%v\n", req.TopicName)
-	return &pb.CreateTopicResponse{Response: "Topic created: " + fmt.Sprintf("%s", req.TopicName)}, nil
+	return &pb.CreateTopicResponse{Response: "Topic created: " + req.TopicName}, nil
 }
 
 func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*pb.RemoveTopicResponse, error) {
@@ -92,16 +92,24 @@ func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*
 	}
 	delete(brokers, topic(req.TopicName))
 	log.Printf("RemoveTopic, Topic Name=%v\n", req.TopicName)
-	return &pb.RemoveTopicResponse{Response: "Topic deleted: " + fmt.Sprintf("%s", req.TopicName)}, nil
+	return &pb.RemoveTopicResponse{Response: "Topic deleted: " + req.TopicName}, nil
 }
 
 func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	lock.Lock()
 	defer lock.Unlock()
+	// BUG FIX: this used to do `brokers[topic] = make(map[...]...)` here,
+	// which threw away every subscriber already registered on the topic.
+	// We now look up the existing subscriber map and only add to it, and
+	// require the topic to already exist (created via CreateTopic) rather
+	// than silently creating it.
+	subs, ok := brokers[topic(req.TopicName)]
+	if !ok {
+		return nil, errors.New("topic does not exist")
+	}
 	subscriptionId := utils.SubscriptionID()
-	brokers[topic(req.TopicName)] = make(map[subscription_id]*queue.Queue)
-	brokers[topic(req.TopicName)][subscription_id(subscriptionId)] = queue.NewQueue()
-	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, subscription_id(subscriptionId))
+	subs[subscription_id(subscriptionId)] = queue.NewQueue()
+	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, subscriptionId)
 	return &pb.AddSubscriberResponse{
 		Response:     "Subscriber added",
 		SubscriberId: subscriptionId,
@@ -110,26 +118,43 @@ func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest
 
 func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.PublishResponse]) error {
 	for {
-		lock.Lock()
+		// BUG FIX: the lock used to be acquired *before* this blocking
+		// Recv() call, which meant the global lock sat held for as long as
+		// the client took to send its next message — stalling every other
+		// RPC (SetKV, GetKV, Subscribe, ...) in the meantime. Recv() now
+		// happens unlocked; the lock is only taken around the map access.
 		req, err := stream.Recv()
+		if err == io.EOF {
+			// BUG FIX: this branch used to be unreachable because the
+			// generic `err != nil` check above it already returned first.
+			return nil
+		}
 		if err != nil {
 			return err
 		}
-		if err == io.EOF {
-			return nil
+
+		lock.Lock()
+		subs, ok := brokers[topic(req.TopicName)]
+		if !ok {
+			lock.Unlock()
+			if err := stream.Send(&pb.PublishResponse{
+				Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
+			}); err != nil {
+				return err
+			}
+			continue
 		}
-		topics := brokers[topic(req.TopicName)]
-		for _, q := range topics {
+		for _, q := range subs {
 			q.Push(req.Value)
 		}
-		err = stream.Send(&pb.PublishResponse{
-			Response: fmt.Sprintf("Published: %v to Topic: %v", req.Value, req.TopicName),
-		})
-		if err != nil {
-			panic(err)
-		}
-		log.Printf("Publish, Topic Name=%v, Value=%v\n", req.TopicName, req.Value)
 		lock.Unlock()
+
+		log.Printf("Publish, Topic Name=%v, Value=%v\n", req.TopicName, req.Value)
+		if err := stream.Send(&pb.PublishResponse{
+			Response: fmt.Sprintf("Published: %v to Topic: %v", req.Value, req.TopicName),
+		}); err != nil {
+			return err
+		}
 	}
 }
 
@@ -139,19 +164,60 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 		if err == io.EOF {
 			return nil
 		}
+		if err != nil {
+			return err
+		}
 
-		if val, ok1 := brokers[topic(req.TopicName)]; ok1 {
-			if q, ok2 := val[subscription_id(req.SubscriberId)]; ok2 {
-				stream.Send(&pb.SubscribeResponse{
-					Response: q.Pop(),
-				})
-				continue
+		lock.Lock()
+		subs, ok := brokers[topic(req.TopicName)]
+		if !ok {
+			lock.Unlock()
+			if err := stream.Send(&pb.SubscribeResponse{
+				Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
+			}); err != nil {
+				return err
+			}
+			continue
+		}
+		q, ok := subs[subscription_id(req.SubscriberId)]
+		lock.Unlock()
+		if !ok {
+			if err := stream.Send(&pb.SubscribeResponse{
+				Response: fmt.Sprintf("subscriber %q not found on topic %q", req.SubscriberId, req.TopicName),
+			}); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// BUG FIX: this used to call q.Pop() unconditionally, which
+		// dereferences a nil Root and panics (crashing the whole process)
+		// whenever nothing had been published to this subscriber yet. We
+		// now wait for something to arrive, briefly re-acquiring the lock
+		// each poll rather than holding it while idle, and bail out
+		// cleanly if the client disconnects while we wait.
+		var value string
+		for {
+			lock.Lock()
+			empty := q.Count() == 0
+			if !empty {
+				value = q.Pop()
+			}
+			lock.Unlock()
+			if !empty {
+				break
+			}
+			select {
+			case <-stream.Context().Done():
+				return stream.Context().Err()
+			case <-time.After(100 * time.Millisecond):
 			}
 		}
-		if err != nil {
-			panic(err)
+
+		log.Printf("Subscribe, Topic Name=%v, Subscriber=%v\n", req.TopicName, req.SubscriberId)
+		if err := stream.Send(&pb.SubscribeResponse{Response: value}); err != nil {
+			return err
 		}
-		log.Printf("Subscribe, Topic Name=%v\n", req.TopicName)
 	}
 }
 
