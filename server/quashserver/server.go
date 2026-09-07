@@ -10,7 +10,6 @@ import (
 	"time"
 
 	pb "github.com/mddfaisal/quash/proto"
-	"github.com/mddfaisal/quash/server/queue"
 	"github.com/mddfaisal/quash/utils"
 	grpc "google.golang.org/grpc"
 )
@@ -22,12 +21,28 @@ type kvValue struct {
 }
 
 type topic string
-type subscription_id string
+type subscriptionID string
+
+// How many unread messages we'll buffer per subscriber before Publish
+// starts dropping messages for that subscriber instead of blocking.
+const subscriberBufferSize = 64
 
 var (
-	lock    = &sync.Mutex{}
-	kvMap   = map[string]kvValue{}
-	brokers = map[topic]map[subscription_id]*queue.Queue{}
+	// Split from a single global lock: kvLock guards kvMap, brokersLock
+	// guards the topic/subscriber map. No RPC ever needs to hold both at
+	// once, so splitting them removes contention between KV operations
+	// and pub/sub operations without introducing any lock-ordering /
+	// deadlock risk.
+	kvLock      = &sync.Mutex{}
+	brokersLock = &sync.Mutex{}
+
+	kvMap = map[string]kvValue{}
+
+	// Each subscriber's "mailbox" is now a native Go channel instead of
+	// the linked-list queue.Queue. This gets us blocking, event-driven
+	// delivery for free via `select` — no manual polling loop, no risk of
+	// popping from an empty structure.
+	brokers = map[topic]map[subscriptionID]chan string{}
 )
 
 type Server struct {
@@ -40,21 +55,21 @@ func (s *Server) Init() {
 
 func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVResponse, error) {
 	log.Printf("SetKV, key=%v, value=%v,\n", kv.Key, kv.Value)
-	lock.Lock()
+	kvLock.Lock()
 	kvMap[kv.Key] = kvValue{
 		value:    kv.Value,
 		initTime: time.Now(),
 		timeOut:  time.Duration(kv.TimeOutDuration) * time.Second,
 	}
-	lock.Unlock()
+	kvLock.Unlock()
 	return &pb.SetKVResponse{Response: "Added"}, nil
 }
 
 func (s *Server) GetKV(ctx context.Context, kv *pb.GetKVRequest) (*pb.GetKVResponse, error) {
 	log.Printf("GetKV, key=%v\n", kv.Key)
 	now := time.Now()
-	lock.Lock()
-	defer lock.Unlock()
+	kvLock.Lock()
+	defer kvLock.Unlock()
 	val, ok := kvMap[kv.Key]
 	if !ok {
 		return nil, errors.New("key doesn't exist")
@@ -67,28 +82,34 @@ func (s *Server) GetKV(ctx context.Context, kv *pb.GetKVRequest) (*pb.GetKVRespo
 }
 
 func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.DeleteKVResponse, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	kvLock.Lock()
+	defer kvLock.Unlock()
 	delete(kvMap, req.Key)
 	return &pb.DeleteKVResponse{Value: "OK"}, nil
 }
 
 func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*pb.CreateTopicResponse, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	brokersLock.Lock()
+	defer brokersLock.Unlock()
 	if _, ok := brokers[topic(req.TopicName)]; ok {
 		return nil, errors.New("topic already exists")
 	}
-	brokers[topic(req.TopicName)] = map[subscription_id]*queue.Queue{}
+	brokers[topic(req.TopicName)] = map[subscriptionID]chan string{}
 	log.Printf("CreateTopic, Topic Name=%v\n", req.TopicName)
 	return &pb.CreateTopicResponse{Response: "Topic created: " + req.TopicName}, nil
 }
 
 func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*pb.RemoveTopicResponse, error) {
-	lock.Lock()
-	defer lock.Unlock()
-	if _, ok := brokers[topic(req.TopicName)]; !ok {
+	brokersLock.Lock()
+	defer brokersLock.Unlock()
+	subs, ok := brokers[topic(req.TopicName)]
+	if !ok {
 		return nil, errors.New("topic does not exist")
+	}
+	// Closing each channel wakes up every Subscribe call currently
+	// blocked on this topic so they can exit instead of hanging forever.
+	for _, ch := range subs {
+		close(ch)
 	}
 	delete(brokers, topic(req.TopicName))
 	log.Printf("RemoveTopic, Topic Name=%v\n", req.TopicName)
@@ -96,47 +117,35 @@ func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*
 }
 
 func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	lock.Lock()
-	defer lock.Unlock()
-	// BUG FIX: this used to do `brokers[topic] = make(map[...]...)` here,
-	// which threw away every subscriber already registered on the topic.
-	// We now look up the existing subscriber map and only add to it, and
-	// require the topic to already exist (created via CreateTopic) rather
-	// than silently creating it.
+	brokersLock.Lock()
+	defer brokersLock.Unlock()
 	subs, ok := brokers[topic(req.TopicName)]
 	if !ok {
 		return nil, errors.New("topic does not exist")
 	}
-	subscriptionId := utils.SubscriptionID()
-	subs[subscription_id(subscriptionId)] = queue.NewQueue()
-	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, subscriptionId)
+	id := utils.SubscriptionID()
+	subs[subscriptionID(id)] = make(chan string, subscriberBufferSize)
+	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, id)
 	return &pb.AddSubscriberResponse{
 		Response:     "Subscriber added",
-		SubscriberId: subscriptionId,
+		SubscriberId: id,
 	}, nil
 }
 
 func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.PublishResponse]) error {
 	for {
-		// BUG FIX: the lock used to be acquired *before* this blocking
-		// Recv() call, which meant the global lock sat held for as long as
-		// the client took to send its next message — stalling every other
-		// RPC (SetKV, GetKV, Subscribe, ...) in the meantime. Recv() now
-		// happens unlocked; the lock is only taken around the map access.
 		req, err := stream.Recv()
 		if err == io.EOF {
-			// BUG FIX: this branch used to be unreachable because the
-			// generic `err != nil` check above it already returned first.
 			return nil
 		}
 		if err != nil {
 			return err
 		}
 
-		lock.Lock()
+		brokersLock.Lock()
 		subs, ok := brokers[topic(req.TopicName)]
 		if !ok {
-			lock.Unlock()
+			brokersLock.Unlock()
 			if err := stream.Send(&pb.PublishResponse{
 				Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
 			}); err != nil {
@@ -144,10 +153,16 @@ func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.P
 			}
 			continue
 		}
-		for _, q := range subs {
-			q.Push(req.Value)
+		for id, ch := range subs {
+			select {
+			case ch <- req.Value:
+			default:
+				// Mailbox full — drop rather than block the publisher on
+				// one slow subscriber.
+				log.Printf("Publish, dropping message for slow subscriber=%v on topic=%v\n", id, req.TopicName)
+			}
 		}
-		lock.Unlock()
+		brokersLock.Unlock()
 
 		log.Printf("Publish, Topic Name=%v, Value=%v\n", req.TopicName, req.Value)
 		if err := stream.Send(&pb.PublishResponse{
@@ -168,10 +183,10 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 			return err
 		}
 
-		lock.Lock()
+		brokersLock.Lock()
 		subs, ok := brokers[topic(req.TopicName)]
 		if !ok {
-			lock.Unlock()
+			brokersLock.Unlock()
 			if err := stream.Send(&pb.SubscribeResponse{
 				Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
 			}); err != nil {
@@ -179,8 +194,8 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 			}
 			continue
 		}
-		q, ok := subs[subscription_id(req.SubscriberId)]
-		lock.Unlock()
+		ch, ok := subs[subscriptionID(req.SubscriberId)]
+		brokersLock.Unlock()
 		if !ok {
 			if err := stream.Send(&pb.SubscribeResponse{
 				Response: fmt.Sprintf("subscriber %q not found on topic %q", req.SubscriberId, req.TopicName),
@@ -190,40 +205,32 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 			continue
 		}
 
-		// BUG FIX: this used to call q.Pop() unconditionally, which
-		// dereferences a nil Root and panics (crashing the whole process)
-		// whenever nothing had been published to this subscriber yet. We
-		// now wait for something to arrive, briefly re-acquiring the lock
-		// each poll rather than holding it while idle, and bail out
-		// cleanly if the client disconnects while we wait.
-		var value string
-		for {
-			lock.Lock()
-			empty := q.Count() == 0
-			if !empty {
-				value = q.Pop()
+		// Blocks here with no CPU usage until Publish sends a value, the
+		// topic is removed (channel closed), or the client disconnects —
+		// no lock held, no polling.
+		select {
+		case value, open := <-ch:
+			if !open {
+				if err := stream.Send(&pb.SubscribeResponse{
+					Response: fmt.Sprintf("topic %q was removed", req.TopicName),
+				}); err != nil {
+					return err
+				}
+				continue
 			}
-			lock.Unlock()
-			if !empty {
-				break
+			log.Printf("Subscribe, Topic Name=%v, Subscriber=%v\n", req.TopicName, req.SubscriberId)
+			if err := stream.Send(&pb.SubscribeResponse{Response: value}); err != nil {
+				return err
 			}
-			select {
-			case <-stream.Context().Done():
-				return stream.Context().Err()
-			case <-time.After(100 * time.Millisecond):
-			}
-		}
-
-		log.Printf("Subscribe, Topic Name=%v, Subscriber=%v\n", req.TopicName, req.SubscriberId)
-		if err := stream.Send(&pb.SubscribeResponse{Response: value}); err != nil {
-			return err
+		case <-stream.Context().Done():
+			return stream.Context().Err()
 		}
 	}
 }
 
 func (s *Server) QueryTopicList(ctx context.Context, q *pb.QueryTopicListRequest) (*pb.QueueTopicListResponse, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	brokersLock.Lock()
+	defer brokersLock.Unlock()
 	list := []string{}
 	for k := range brokers {
 		list = append(list, string(k))
@@ -233,16 +240,16 @@ func (s *Server) QueryTopicList(ctx context.Context, q *pb.QueryTopicListRequest
 
 func (s *Server) QueryTopicMetric(q *pb.QueryTopicMetricRequest, stream grpc.ServerStreamingServer[pb.QueueTopicMetricResponse]) error {
 	for {
-		lock.Lock()
+		brokersLock.Lock()
 		queueMetric := make(map[string]*pb.QueueMetric, len(brokers))
-		for name, qu := range brokers {
+		for name, subs := range brokers {
 			queueMetric[string(name)] = &pb.QueueMetric{
 				QueueMetric: map[string]int64{
-					"subscriber_count": int64(len(qu)),
+					"subscriber_count": int64(len(subs)),
 				},
 			}
 		}
-		lock.Unlock()
+		brokersLock.Unlock()
 
 		if err := stream.Send(&pb.QueueTopicMetricResponse{
 			QueueMetric: queueMetric,
@@ -264,14 +271,14 @@ func (s *Server) memoryDump() {
 
 func GarbageCollection() {
 	for {
-		lock.Lock()
+		kvLock.Lock()
 		now := time.Now()
 		for k, v := range kvMap {
 			if now.After(v.initTime.Add(v.timeOut)) {
 				delete(kvMap, k)
 			}
 		}
-		lock.Unlock()
+		kvLock.Unlock()
 		time.Sleep(1 * time.Second)
 	}
 }
