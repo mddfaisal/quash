@@ -10,18 +10,10 @@ import (
 	"time"
 
 	pb "github.com/mddfaisal/quash/proto"
+	"github.com/mddfaisal/quash/structs"
 	"github.com/mddfaisal/quash/utils"
 	grpc "google.golang.org/grpc"
 )
-
-type kvValue struct {
-	value    string
-	timeOut  time.Duration
-	initTime time.Time
-}
-
-type topic string
-type subscriptionID string
 
 // How many unread messages we'll buffer per subscriber before Publish
 // starts dropping messages for that subscriber instead of blocking.
@@ -36,14 +28,26 @@ var (
 	kvLock      = &sync.Mutex{}
 	brokersLock = &sync.Mutex{}
 
-	kvMap = map[string]kvValue{}
+	kvMap = map[string]structs.KVValue{}
 
 	// Each subscriber's "mailbox" is now a native Go channel instead of
 	// the linked-list queue.Queue. This gets us blocking, event-driven
 	// delivery for free via `select` — no manual polling loop, no risk of
 	// popping from an empty structure.
-	brokers = map[topic]map[subscriptionID]chan string{}
+	brokers = map[structs.Topic]map[structs.SubscriptionID]chan string{}
 )
+
+func GetKVMapLength() int64 {
+	kvLock.Lock()
+	defer kvLock.Unlock()
+	return int64(len(kvMap))
+}
+
+func GetBrokers() map[structs.Topic]map[structs.SubscriptionID]chan string {
+	brokersLock.Lock()
+	defer brokersLock.Unlock()
+	return brokers
+}
 
 type Server struct {
 	pb.QuashServiceServer
@@ -56,10 +60,10 @@ func (s *Server) Init() {
 func (s *Server) SetKV(ctx context.Context, kv *pb.SetKVRequest) (*pb.SetKVResponse, error) {
 	log.Printf("SetKV, key=%v, value=%v,\n", kv.Key, kv.Value)
 	kvLock.Lock()
-	kvMap[kv.Key] = kvValue{
-		value:    kv.Value,
-		initTime: time.Now(),
-		timeOut:  time.Duration(kv.TimeOutDuration) * time.Second,
+	kvMap[kv.Key] = structs.KVValue{
+		Value:    kv.Value,
+		InitTime: time.Now(),
+		TimeOut:  time.Duration(kv.TimeOutDuration) * time.Second,
 	}
 	kvLock.Unlock()
 	return &pb.SetKVResponse{Response: "Added"}, nil
@@ -74,11 +78,11 @@ func (s *Server) GetKV(ctx context.Context, kv *pb.GetKVRequest) (*pb.GetKVRespo
 	if !ok {
 		return nil, errors.New("key doesn't exist")
 	}
-	if now.After(val.initTime.Add(val.timeOut)) {
+	if now.After(val.InitTime.Add(val.TimeOut)) {
 		delete(kvMap, kv.Key)
 		return nil, errors.New("key doesn't exist")
 	}
-	return &pb.GetKVResponse{Value: val.value}, nil
+	return &pb.GetKVResponse{Value: val.Value}, nil
 }
 
 func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.DeleteKVResponse, error) {
@@ -91,10 +95,10 @@ func (s *Server) DeleteKV(ctx context.Context, req *pb.DeleteKVRequest) (*pb.Del
 func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*pb.CreateTopicResponse, error) {
 	brokersLock.Lock()
 	defer brokersLock.Unlock()
-	if _, ok := brokers[topic(req.TopicName)]; ok {
+	if _, ok := brokers[structs.Topic(req.TopicName)]; ok {
 		return nil, errors.New("topic already exists")
 	}
-	brokers[topic(req.TopicName)] = map[subscriptionID]chan string{}
+	brokers[structs.Topic(req.TopicName)] = map[structs.SubscriptionID]chan string{}
 	log.Printf("CreateTopic, Topic Name=%v\n", req.TopicName)
 	return &pb.CreateTopicResponse{Response: "Topic created: " + req.TopicName}, nil
 }
@@ -102,7 +106,7 @@ func (s *Server) CreateTopic(ctx context.Context, req *pb.CreateTopicRequest) (*
 func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*pb.RemoveTopicResponse, error) {
 	brokersLock.Lock()
 	defer brokersLock.Unlock()
-	subs, ok := brokers[topic(req.TopicName)]
+	subs, ok := brokers[structs.Topic(req.TopicName)]
 	if !ok {
 		return nil, errors.New("topic does not exist")
 	}
@@ -111,7 +115,7 @@ func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*
 	for _, ch := range subs {
 		close(ch)
 	}
-	delete(brokers, topic(req.TopicName))
+	delete(brokers, structs.Topic(req.TopicName))
 	log.Printf("RemoveTopic, Topic Name=%v\n", req.TopicName)
 	return &pb.RemoveTopicResponse{Response: "Topic deleted: " + req.TopicName}, nil
 }
@@ -119,12 +123,12 @@ func (s *Server) RemoveTopic(ctx context.Context, req *pb.RemoveTopicRequest) (*
 func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	brokersLock.Lock()
 	defer brokersLock.Unlock()
-	subs, ok := brokers[topic(req.TopicName)]
+	subs, ok := brokers[structs.Topic(req.TopicName)]
 	if !ok {
 		return nil, errors.New("topic does not exist")
 	}
 	id := utils.SubscriptionID()
-	subs[subscriptionID(id)] = make(chan string, subscriberBufferSize)
+	subs[structs.SubscriptionID(id)] = make(chan string, subscriberBufferSize)
 	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, id)
 	return &pb.AddSubscriberResponse{
 		Response:     "Subscriber added",
@@ -143,7 +147,7 @@ func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.P
 		}
 
 		brokersLock.Lock()
-		subs, ok := brokers[topic(req.TopicName)]
+		subs, ok := brokers[structs.Topic(req.TopicName)]
 		if !ok {
 			brokersLock.Unlock()
 			if err := stream.Send(&pb.PublishResponse{
@@ -184,7 +188,7 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 		}
 
 		brokersLock.Lock()
-		subs, ok := brokers[topic(req.TopicName)]
+		subs, ok := brokers[structs.Topic(req.TopicName)]
 		if !ok {
 			brokersLock.Unlock()
 			if err := stream.Send(&pb.SubscribeResponse{
@@ -194,7 +198,7 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 			}
 			continue
 		}
-		ch, ok := subs[subscriptionID(req.SubscriberId)]
+		ch, ok := subs[structs.SubscriptionID(req.SubscriberId)]
 		brokersLock.Unlock()
 		if !ok {
 			if err := stream.Send(&pb.SubscribeResponse{
@@ -274,7 +278,7 @@ func GarbageCollection() {
 		kvLock.Lock()
 		now := time.Now()
 		for k, v := range kvMap {
-			if now.After(v.initTime.Add(v.timeOut)) {
+			if now.After(v.InitTime.Add(v.TimeOut)) {
 				delete(kvMap, k)
 			}
 		}

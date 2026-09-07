@@ -102,7 +102,4 @@ service QuashService {
 
     rpc Publish(stream PublishRequest) returns (stream PublishResponse);
     rpc Subscribe(stream SubscribeRequest) returns (stream SubscribeResponse);
-
-    rpc QueryTopicList(QueryTopicListRequest) returns (QueueTopicListResponse);
-    rpc QueryTopicMetric(QueryTopicMetricRequest) returns (stream QueueTopicMetricResponse);
 }

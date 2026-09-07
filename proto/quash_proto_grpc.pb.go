@@ -19,16 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	QuashService_SetKV_FullMethodName            = "/quash_proto.QuashService/SetKV"
-	QuashService_GetKV_FullMethodName            = "/quash_proto.QuashService/GetKV"
-	QuashService_DeleteKV_FullMethodName         = "/quash_proto.QuashService/DeleteKV"
-	QuashService_CreateTopic_FullMethodName      = "/quash_proto.QuashService/CreateTopic"
-	QuashService_RemoveTopic_FullMethodName      = "/quash_proto.QuashService/RemoveTopic"
-	QuashService_AddSubscriber_FullMethodName    = "/quash_proto.QuashService/AddSubscriber"
-	QuashService_Publish_FullMethodName          = "/quash_proto.QuashService/Publish"
-	QuashService_Subscribe_FullMethodName        = "/quash_proto.QuashService/Subscribe"
-	QuashService_QueryTopicList_FullMethodName   = "/quash_proto.QuashService/QueryTopicList"
-	QuashService_QueryTopicMetric_FullMethodName = "/quash_proto.QuashService/QueryTopicMetric"
+	QuashService_SetKV_FullMethodName         = "/quash_proto.QuashService/SetKV"
+	QuashService_GetKV_FullMethodName         = "/quash_proto.QuashService/GetKV"
+	QuashService_DeleteKV_FullMethodName      = "/quash_proto.QuashService/DeleteKV"
+	QuashService_CreateTopic_FullMethodName   = "/quash_proto.QuashService/CreateTopic"
+	QuashService_RemoveTopic_FullMethodName   = "/quash_proto.QuashService/RemoveTopic"
+	QuashService_AddSubscriber_FullMethodName = "/quash_proto.QuashService/AddSubscriber"
+	QuashService_Publish_FullMethodName       = "/quash_proto.QuashService/Publish"
+	QuashService_Subscribe_FullMethodName     = "/quash_proto.QuashService/Subscribe"
 )
 
 // QuashServiceClient is the client API for QuashService service.
@@ -43,8 +41,6 @@ type QuashServiceClient interface {
 	AddSubscriber(ctx context.Context, in *AddSubscriberRequest, opts ...grpc.CallOption) (*AddSubscriberResponse, error)
 	Publish(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[PublishRequest, PublishResponse], error)
 	Subscribe(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[SubscribeRequest, SubscribeResponse], error)
-	QueryTopicList(ctx context.Context, in *QueryTopicListRequest, opts ...grpc.CallOption) (*QueueTopicListResponse, error)
-	QueryTopicMetric(ctx context.Context, in *QueryTopicMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueTopicMetricResponse], error)
 }
 
 type quashServiceClient struct {
@@ -141,35 +137,6 @@ func (c *quashServiceClient) Subscribe(ctx context.Context, opts ...grpc.CallOpt
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type QuashService_SubscribeClient = grpc.BidiStreamingClient[SubscribeRequest, SubscribeResponse]
 
-func (c *quashServiceClient) QueryTopicList(ctx context.Context, in *QueryTopicListRequest, opts ...grpc.CallOption) (*QueueTopicListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(QueueTopicListResponse)
-	err := c.cc.Invoke(ctx, QuashService_QueryTopicList_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *quashServiceClient) QueryTopicMetric(ctx context.Context, in *QueryTopicMetricRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[QueueTopicMetricResponse], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &QuashService_ServiceDesc.Streams[2], QuashService_QueryTopicMetric_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[QueryTopicMetricRequest, QueueTopicMetricResponse]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_QueryTopicMetricClient = grpc.ServerStreamingClient[QueueTopicMetricResponse]
-
 // QuashServiceServer is the server API for QuashService service.
 // All implementations must embed UnimplementedQuashServiceServer
 // for forward compatibility.
@@ -182,8 +149,6 @@ type QuashServiceServer interface {
 	AddSubscriber(context.Context, *AddSubscriberRequest) (*AddSubscriberResponse, error)
 	Publish(grpc.BidiStreamingServer[PublishRequest, PublishResponse]) error
 	Subscribe(grpc.BidiStreamingServer[SubscribeRequest, SubscribeResponse]) error
-	QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error)
-	QueryTopicMetric(*QueryTopicMetricRequest, grpc.ServerStreamingServer[QueueTopicMetricResponse]) error
 	mustEmbedUnimplementedQuashServiceServer()
 }
 
@@ -217,12 +182,6 @@ func (UnimplementedQuashServiceServer) Publish(grpc.BidiStreamingServer[PublishR
 }
 func (UnimplementedQuashServiceServer) Subscribe(grpc.BidiStreamingServer[SubscribeRequest, SubscribeResponse]) error {
 	return status.Error(codes.Unimplemented, "method Subscribe not implemented")
-}
-func (UnimplementedQuashServiceServer) QueryTopicList(context.Context, *QueryTopicListRequest) (*QueueTopicListResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method QueryTopicList not implemented")
-}
-func (UnimplementedQuashServiceServer) QueryTopicMetric(*QueryTopicMetricRequest, grpc.ServerStreamingServer[QueueTopicMetricResponse]) error {
-	return status.Error(codes.Unimplemented, "method QueryTopicMetric not implemented")
 }
 func (UnimplementedQuashServiceServer) mustEmbedUnimplementedQuashServiceServer() {}
 func (UnimplementedQuashServiceServer) testEmbeddedByValue()                      {}
@@ -367,35 +326,6 @@ func _QuashService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type QuashService_SubscribeServer = grpc.BidiStreamingServer[SubscribeRequest, SubscribeResponse]
 
-func _QuashService_QueryTopicList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryTopicListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QuashServiceServer).QueryTopicList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: QuashService_QueryTopicList_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QuashServiceServer).QueryTopicList(ctx, req.(*QueryTopicListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _QuashService_QueryTopicMetric_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(QueryTopicMetricRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(QuashServiceServer).QueryTopicMetric(m, &grpc.GenericServerStream[QueryTopicMetricRequest, QueueTopicMetricResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type QuashService_QueryTopicMetricServer = grpc.ServerStreamingServer[QueueTopicMetricResponse]
-
 // QuashService_ServiceDesc is the grpc.ServiceDesc for QuashService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -427,10 +357,6 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AddSubscriber",
 			Handler:    _QuashService_AddSubscriber_Handler,
 		},
-		{
-			MethodName: "QueryTopicList",
-			Handler:    _QuashService_QueryTopicList_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -444,11 +370,6 @@ var QuashService_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _QuashService_Subscribe_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
-		},
-		{
-			StreamName:    "QueryTopicMetric",
-			Handler:       _QuashService_QueryTopicMetric_Handler,
-			ServerStreams: true,
 		},
 	},
 	Metadata: "quash_proto.proto",

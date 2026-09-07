@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"sync"
 
@@ -196,45 +195,5 @@ func Subscribe(topicName string, req, resp chan string) error {
 		if resp != nil {
 			resp <- subscription.Response
 		}
-	}
-}
-
-func QueryTopicList(ctx context.Context, req *quash_proto.QueryTopicListRequest) (*quash_proto.QueueTopicListResponse, error) {
-	lock.Lock()
-	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer func() {
-		conn.Close()
-		lock.Unlock()
-	}()
-	if err != nil {
-		return nil, err
-	}
-	client := quash_proto.NewQuashServiceClient(conn)
-	resp, err := client.QueryTopicList(ctx, req)
-	return resp, err
-}
-
-func QueryTopicMetric(data chan *quash_proto.QueueTopicMetricResponse) error {
-	lock.Lock()
-	conn, err := grpc.Dial(utils.QuashDb, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer func() {
-		conn.Close()
-		lock.Unlock()
-	}()
-	if err != nil {
-		return err
-	}
-	client := quash_proto.NewQuashServiceClient(conn)
-	stream, err := client.QueryTopicMetric(context.Background(), &quash_proto.QueryTopicMetricRequest{})
-	if err != nil {
-		return err
-	}
-	for {
-		resp, err := stream.Recv()
-		if err != nil {
-			return err
-		}
-		data <- resp
-		fmt.Printf("Queue Metrics: %v\n", resp.QueueMetric)
 	}
 }

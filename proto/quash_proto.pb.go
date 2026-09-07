@@ -1039,7 +1039,7 @@ const file_quash_proto_proto_rawDesc = "" +
 	"topic_name\x18\x01 \x01(\tR\ttopicName\"X\n" +
 	"\x15AddSubscriberResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\x12#\n" +
-	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId2\xab\x06\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId2\xed\x04\n" +
 	"\fQuashService\x12>\n" +
 	"\x05SetKV\x12\x19.quash_proto.SetKVRequest\x1a\x1a.quash_proto.SetKVResponse\x12>\n" +
 	"\x05GetKV\x12\x19.quash_proto.GetKVRequest\x1a\x1a.quash_proto.GetKVResponse\x12G\n" +
@@ -1048,9 +1048,7 @@ const file_quash_proto_proto_rawDesc = "" +
 	"\vRemoveTopic\x12\x1f.quash_proto.RemoveTopicRequest\x1a .quash_proto.RemoveTopicResponse\x12V\n" +
 	"\rAddSubscriber\x12!.quash_proto.AddSubscriberRequest\x1a\".quash_proto.AddSubscriberResponse\x12H\n" +
 	"\aPublish\x12\x1b.quash_proto.PublishRequest\x1a\x1c.quash_proto.PublishResponse(\x010\x01\x12N\n" +
-	"\tSubscribe\x12\x1d.quash_proto.SubscribeRequest\x1a\x1e.quash_proto.SubscribeResponse(\x010\x01\x12Y\n" +
-	"\x0eQueryTopicList\x12\".quash_proto.QueryTopicListRequest\x1a#.quash_proto.QueueTopicListResponse\x12a\n" +
-	"\x10QueryTopicMetric\x12$.quash_proto.QueryTopicMetricRequest\x1a%.quash_proto.QueueTopicMetricResponse0\x01B\"Z github.com/mddfaisal/quash/protob\x06proto3"
+	"\tSubscribe\x12\x1d.quash_proto.SubscribeRequest\x1a\x1e.quash_proto.SubscribeResponse(\x010\x01B\"Z github.com/mddfaisal/quash/protob\x06proto3"
 
 var (
 	file_quash_proto_proto_rawDescOnce sync.Once
@@ -1102,20 +1100,16 @@ var file_quash_proto_proto_depIdxs = []int32{
 	19, // 8: quash_proto.QuashService.AddSubscriber:input_type -> quash_proto.AddSubscriberRequest
 	6,  // 9: quash_proto.QuashService.Publish:input_type -> quash_proto.PublishRequest
 	8,  // 10: quash_proto.QuashService.Subscribe:input_type -> quash_proto.SubscribeRequest
-	13, // 11: quash_proto.QuashService.QueryTopicList:input_type -> quash_proto.QueryTopicListRequest
-	14, // 12: quash_proto.QuashService.QueryTopicMetric:input_type -> quash_proto.QueryTopicMetricRequest
-	1,  // 13: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
-	3,  // 14: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
-	5,  // 15: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
-	16, // 16: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
-	18, // 17: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
-	20, // 18: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
-	7,  // 19: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
-	9,  // 20: quash_proto.QuashService.Subscribe:output_type -> quash_proto.SubscribeResponse
-	10, // 21: quash_proto.QuashService.QueryTopicList:output_type -> quash_proto.QueueTopicListResponse
-	12, // 22: quash_proto.QuashService.QueryTopicMetric:output_type -> quash_proto.QueueTopicMetricResponse
-	13, // [13:23] is the sub-list for method output_type
-	3,  // [3:13] is the sub-list for method input_type
+	1,  // 11: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
+	3,  // 12: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
+	5,  // 13: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
+	16, // 14: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
+	18, // 15: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
+	20, // 16: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
+	7,  // 17: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
+	9,  // 18: quash_proto.QuashService.Subscribe:output_type -> quash_proto.SubscribeResponse
+	11, // [11:19] is the sub-list for method output_type
+	3,  // [3:11] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
