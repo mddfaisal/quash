@@ -1,13 +1,13 @@
 # Quash
 
-⚠️ **Work in progress** — Quash is an experimental gRPC-based in-memory key-value store and queue service written in Go, with a live telemetry dashboard over WebSocket.
+⚠️ **Work in progress** — Quash is an experimental gRPC-based service written in Go that combines an in-memory key-value store with a topic-based publish/subscribe system, plus a live telemetry dashboard over WebSocket.
 
 ## Features
 
 - **Key-value store** — set, get, and delete keys with a per-key TTL
-- **In-memory queues** — create/delete named queues, push values, and pop them via a streaming RPC
-- **Live telemetry dashboard** — an admin web page that shows queue metrics in real time over WebSocket
-- **gRPC API** — language-agnostic surface defined in Protocol Buffers
+- **Publish/Subscribe** — create named topics, add subscribers to a topic, and publish values that get broadcast to every subscriber on that topic
+- **Live telemetry dashboard** — an admin web page that streams topic/subscriber metrics in real time over WebSocket
+- **gRPC API** — language-agnostic surface defined in Protocol Buffers, including bidirectional streaming for `Publish` and `Subscribe`
 - **Hot reload for development** — configured via [Air](https://github.com/air-verse/air) (`.air.toml`)
 
 > **Note:** This is an early-stage, single-node, in-memory project meant for learning and experimentation — not production use. See [Known limitations](#known-limitations).
@@ -26,41 +26,46 @@
               ┌────────────────────┴────────────────────┐
               │                                          │
    gRPC server  :6300                        go admin.AdminServer()
-   (server/server)                                       │
+   (server/quashserver)                                  │
    - SetKV / GetKV / DeleteKV                   HTTP + WebSocket  :6301
-   - CreateQueue / DeleteQueue                  (admin package)
-   - PushQueue / PopQueue (stream)              - "/"        → dashboard HTML
-   - QueryQueueList                             - "/ws/admin"→ live metrics feed
-   - QueryQueueMetric (stream)                       │
-              │                                       │
-     server/queue (linked-list queue)     gRPC client → QueryQueueMetric stream
+   - CreateTopic / RemoveTopic                  (admin package)
+   - AddSubscriber                              - "/"        → dashboard HTML
+   - Publish (bidi stream)                      - "/ws/admin"→ live topic metrics feed
+   - Subscribe (bidi stream)                        │
+   - QueryTopicList                                 │
+   - QueryTopicMetric (stream)          gRPC client → QueryTopicMetric stream
+              │
+    server/queue (linked-list queue,
+    one per subscriber — used as each
+    subscriber's private mailbox)
 ```
 
-The admin dashboard doesn't read server state directly — it dials the gRPC server as a regular client and re-broadcasts `QueryQueueMetric` over a WebSocket to the browser.
+Internally, each topic holds a map of `subscriber ID → *queue.Queue`. `Publish` pushes a value onto **every** subscriber's queue for that topic (broadcast); `Subscribe` reads off one subscriber's own queue. The admin dashboard doesn't touch server state directly — it dials the gRPC server as a regular client and re-broadcasts `QueryTopicMetric` over a WebSocket to the browser.
 
 ## Project structure
 
 ```
 .
-├── main.go                     # Entry point, signal handling, graceful shutdown
-├── config/
-│   └── config.go                # Listen addresses (QuashDb :6300, QuashTelemetry :6301)
+├── main.go                       # Entry point, signal handling, graceful shutdown
+├── utils/
+│   ├── utils.go                    # Listen addresses (QuashDb :6300, QuashTelemetry :6301), SubscriptionID()
+│   └── utils_test.go
 ├── admin/
-│   └── admin.go                  # Admin dashboard: HTTP + WebSocket telemetry bridge
+│   └── admin.go                    # Admin dashboard: HTTP + WebSocket telemetry bridge
 ├── client/
-│   ├── client.go                 # Go client wrapper around the gRPC service
-│   └── client_test.go            # Client tests
+│   ├── client.go                   # Go client wrapper around the gRPC service
+│   └── client_test.go
 ├── proto/
-│   ├── quash_proto.proto         # Service and message definitions
-│   ├── quash_proto.pb.go         # Generated message code
-│   └── quash_proto_grpc.pb.go    # Generated gRPC code
+│   ├── quash_proto.proto           # Service and message definitions
+│   ├── quash_proto.pb.go           # Generated message code
+│   └── quash_proto_grpc.pb.go      # Generated gRPC code
 ├── server/
-│   ├── server.go                 # gRPC server bootstrap, starts admin server too
-│   ├── server/
-│   │   └── server.go              # Core RPC handlers, KV store, TTL garbage collection
+│   ├── server.go                   # gRPC server bootstrap, starts admin server too
+│   ├── quashserver/
+│   │   └── server.go                 # Core RPC handlers, KV store, topic broker, TTL garbage collection
 │   └── queue/
-│       └── queue.go               # Singly linked-list queue implementation
-├── .air.toml                     # Hot-reload config for local development
+│       └── queue.go                   # Singly linked-list queue (used as each subscriber's mailbox)
+├── .air.toml                       # Hot-reload config for local development
 └── go.mod
 ```
 
@@ -87,7 +92,7 @@ go build -o quash
 
 This starts:
 - the gRPC API on `0.0.0.0:6300`
-- the admin dashboard on `:6301` — open `http://localhost:6301` in a browser to see live queue metrics
+- the admin dashboard on `:6301` — open `http://localhost:6301` in a browser to see live topic metrics
 
 ### Development with hot reload
 
@@ -113,12 +118,13 @@ Full definitions live in `proto/quash_proto.proto`.
 | `SetKV` | unary | Store a key/value with a TTL (`time_out_duration`, in seconds) |
 | `GetKV` | unary | Retrieve a value by key; errors if missing or expired |
 | `DeleteKV` | unary | Delete a key |
-| `CreateQueue` | unary | Create a named queue |
-| `DeleteQueue` | unary | Delete a named queue |
-| `PushQueue` | unary | Push a value onto a named queue (creates it if missing) |
-| `PopQueue` | server-streaming | Stream values off a queue as they become available |
-| `QueryQueueList` | unary | List all queue names |
-| `QueryQueueMetric` | server-streaming | Stream `{queue name → item count}` snapshots |
+| `CreateTopic` | unary | Create a named topic |
+| `RemoveTopic` | unary | Delete a topic |
+| `AddSubscriber` | unary | Register a new subscriber on a topic; returns a `subscriber_id` |
+| `Publish` | bidi-streaming | Send values to a topic; every current subscriber receives a copy |
+| `Subscribe` | bidi-streaming | Pull values for a given `subscriber_id` on a topic |
+| `QueryTopicList` | unary | List all topic names |
+| `QueryTopicMetric` | server-streaming | Stream `{topic → {subscriber_count}}` snapshots |
 
 ## Usage example
 
@@ -147,22 +153,22 @@ func main() {
     }
     fmt.Println("SetKV response:", resp)
 
-    // Read it back
-    getResp, err := client.GetKV(ctx, &proto.GetKVRequest{Key: "user:123"})
+    // Create a topic and add a subscriber
+    if _, err := client.CreateTopic(ctx, &proto.CreateTopicRequest{TopicName: "orders"}); err != nil {
+        panic(err)
+    }
+    sub, err := client.AddSubscriber(ctx, &proto.AddSubscriberRequest{TopicName: "orders"})
     if err != nil {
         panic(err)
     }
-    fmt.Println("GetKV value:", getResp.Value)
+    fmt.Println("Subscriber ID:", sub.SubscriberId)
 
-    // Push an item into a queue
-    qResp, err := client.PushQueue(ctx, &proto.PushIntoQueueRequest{
-        QueueName: "tasks",
-        Value:     "process_order",
-    })
-    if err != nil {
-        panic(err)
-    }
-    fmt.Println("PushQueue response:", qResp)
+    // Publish a value (Publish/Subscribe use channel-driven streaming helpers)
+    pubReq, pubResp := make(chan string), make(chan string)
+    go client.Publish("orders", pubReq, pubResp)
+    pubReq <- "process_order_42"
+    fmt.Println("Publish ack:", <-pubResp)
+    close(pubReq)
 }
 ```
 
@@ -179,7 +185,9 @@ protoc --go_out=. --go-grpc_out=. proto/quash_proto.proto
 - Single-node, in-memory only — no persistence or durability across restarts
 - No authentication/authorization or multi-tenancy
 - `server/queue` is not thread-safe on its own; correctness currently depends on every caller holding the shared server-level lock
-- No real pub/sub primitive yet — `QueryQueueMetric` streaming plus the admin WebSocket bridge is the closest thing today
+- `Subscribe` can panic if it pops from a subscriber's queue before anything has been published to it — avoid calling `Subscribe` until at least one `Publish` has occurred, until this is fixed server-side
+- `AddSubscriber` currently resets a topic's subscriber map each time it's called, so adding a second subscriber can drop the first — treat multi-subscriber topics as unstable for now
+- `Publish` holds the server's global lock while waiting to receive the next message on the stream, which can stall unrelated KV/topic operations while a publish stream is idle
 
 ## Contributing
 
