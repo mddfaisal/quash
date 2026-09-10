@@ -405,7 +405,7 @@ func (x *PublishResponse) GetResponse() string {
 	return ""
 }
 
-type SubscribeRequest struct {
+type ConsumeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TopicName     string                 `protobuf:"bytes,1,opt,name=topic_name,json=topicName,proto3" json:"topic_name,omitempty"`
 	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriber_id,json=subscriberId,proto3" json:"subscriber_id,omitempty"`
@@ -413,20 +413,20 @@ type SubscribeRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SubscribeRequest) Reset() {
-	*x = SubscribeRequest{}
+func (x *ConsumeRequest) Reset() {
+	*x = ConsumeRequest{}
 	mi := &file_quash_proto_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SubscribeRequest) String() string {
+func (x *ConsumeRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SubscribeRequest) ProtoMessage() {}
+func (*ConsumeRequest) ProtoMessage() {}
 
-func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
+func (x *ConsumeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -438,46 +438,46 @@ func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
-func (*SubscribeRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ConsumeRequest.ProtoReflect.Descriptor instead.
+func (*ConsumeRequest) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *SubscribeRequest) GetTopicName() string {
+func (x *ConsumeRequest) GetTopicName() string {
 	if x != nil {
 		return x.TopicName
 	}
 	return ""
 }
 
-func (x *SubscribeRequest) GetSubscriberId() string {
+func (x *ConsumeRequest) GetSubscriberId() string {
 	if x != nil {
 		return x.SubscriberId
 	}
 	return ""
 }
 
-type SubscribeResponse struct {
+type ConsumeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SubscribeResponse) Reset() {
-	*x = SubscribeResponse{}
+func (x *ConsumeResponse) Reset() {
+	*x = ConsumeResponse{}
 	mi := &file_quash_proto_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SubscribeResponse) String() string {
+func (x *ConsumeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SubscribeResponse) ProtoMessage() {}
+func (*ConsumeResponse) ProtoMessage() {}
 
-func (x *SubscribeResponse) ProtoReflect() protoreflect.Message {
+func (x *ConsumeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_quash_proto_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -489,12 +489,12 @@ func (x *SubscribeResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SubscribeResponse.ProtoReflect.Descriptor instead.
-func (*SubscribeResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ConsumeResponse.ProtoReflect.Descriptor instead.
+func (*ConsumeResponse) Descriptor() ([]byte, []int) {
 	return file_quash_proto_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *SubscribeResponse) GetResponse() string {
+func (x *ConsumeResponse) GetResponse() string {
 	if x != nil {
 		return x.Response
 	}
@@ -977,6 +977,102 @@ func (x *AddSubscriberResponse) GetSubscriberId() string {
 	return ""
 }
 
+type RemoveSubscriberRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TopicName     string                 `protobuf:"bytes,1,opt,name=topic_name,json=topicName,proto3" json:"topic_name,omitempty"`
+	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriber_id,json=subscriberId,proto3" json:"subscriber_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveSubscriberRequest) Reset() {
+	*x = RemoveSubscriberRequest{}
+	mi := &file_quash_proto_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveSubscriberRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveSubscriberRequest) ProtoMessage() {}
+
+func (x *RemoveSubscriberRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quash_proto_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveSubscriberRequest.ProtoReflect.Descriptor instead.
+func (*RemoveSubscriberRequest) Descriptor() ([]byte, []int) {
+	return file_quash_proto_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *RemoveSubscriberRequest) GetTopicName() string {
+	if x != nil {
+		return x.TopicName
+	}
+	return ""
+}
+
+func (x *RemoveSubscriberRequest) GetSubscriberId() string {
+	if x != nil {
+		return x.SubscriberId
+	}
+	return ""
+}
+
+type RemoveSubscriberResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Response      string                 `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveSubscriberResponse) Reset() {
+	*x = RemoveSubscriberResponse{}
+	mi := &file_quash_proto_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveSubscriberResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveSubscriberResponse) ProtoMessage() {}
+
+func (x *RemoveSubscriberResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quash_proto_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveSubscriberResponse.ProtoReflect.Descriptor instead.
+func (*RemoveSubscriberResponse) Descriptor() ([]byte, []int) {
+	return file_quash_proto_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *RemoveSubscriberResponse) GetResponse() string {
+	if x != nil {
+		return x.Response
+	}
+	return ""
+}
+
 var File_quash_proto_proto protoreflect.FileDescriptor
 
 const file_quash_proto_proto_rawDesc = "" +
@@ -1002,12 +1098,12 @@ const file_quash_proto_proto_rawDesc = "" +
 	"topic_name\x18\x01 \x01(\tR\ttopicName\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"-\n" +
 	"\x0fPublishResponse\x12\x1a\n" +
-	"\bresponse\x18\x01 \x01(\tR\bresponse\"V\n" +
-	"\x10SubscribeRequest\x12\x1d\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse\"T\n" +
+	"\x0eConsumeRequest\x12\x1d\n" +
 	"\n" +
 	"topic_name\x18\x01 \x01(\tR\ttopicName\x12#\n" +
-	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId\"/\n" +
-	"\x11SubscribeResponse\x12\x1a\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId\"-\n" +
+	"\x0fConsumeResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\"7\n" +
 	"\x16QueueTopicListResponse\x12\x1d\n" +
 	"\n" +
@@ -1039,16 +1135,23 @@ const file_quash_proto_proto_rawDesc = "" +
 	"topic_name\x18\x01 \x01(\tR\ttopicName\"X\n" +
 	"\x15AddSubscriberResponse\x12\x1a\n" +
 	"\bresponse\x18\x01 \x01(\tR\bresponse\x12#\n" +
-	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId2\xed\x04\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId\"]\n" +
+	"\x17RemoveSubscriberRequest\x12\x1d\n" +
+	"\n" +
+	"topic_name\x18\x01 \x01(\tR\ttopicName\x12#\n" +
+	"\rsubscriber_id\x18\x02 \x01(\tR\fsubscriberId\"6\n" +
+	"\x18RemoveSubscriberResponse\x12\x1a\n" +
+	"\bresponse\x18\x01 \x01(\tR\bresponse2\xc8\x05\n" +
 	"\fQuashService\x12>\n" +
 	"\x05SetKV\x12\x19.quash_proto.SetKVRequest\x1a\x1a.quash_proto.SetKVResponse\x12>\n" +
 	"\x05GetKV\x12\x19.quash_proto.GetKVRequest\x1a\x1a.quash_proto.GetKVResponse\x12G\n" +
 	"\bDeleteKV\x12\x1c.quash_proto.DeleteKVRequest\x1a\x1d.quash_proto.DeleteKVResponse\x12P\n" +
 	"\vCreateTopic\x12\x1f.quash_proto.CreateTopicRequest\x1a .quash_proto.CreateTopicResponse\x12P\n" +
 	"\vRemoveTopic\x12\x1f.quash_proto.RemoveTopicRequest\x1a .quash_proto.RemoveTopicResponse\x12V\n" +
-	"\rAddSubscriber\x12!.quash_proto.AddSubscriberRequest\x1a\".quash_proto.AddSubscriberResponse\x12H\n" +
-	"\aPublish\x12\x1b.quash_proto.PublishRequest\x1a\x1c.quash_proto.PublishResponse(\x010\x01\x12N\n" +
-	"\tSubscribe\x12\x1d.quash_proto.SubscribeRequest\x1a\x1e.quash_proto.SubscribeResponse(\x010\x01B\"Z github.com/mddfaisal/quash/protob\x06proto3"
+	"\rAddSubscriber\x12!.quash_proto.AddSubscriberRequest\x1a\".quash_proto.AddSubscriberResponse\x12_\n" +
+	"\x10RemoveSubscriber\x12$.quash_proto.RemoveSubscriberRequest\x1a%.quash_proto.RemoveSubscriberResponse\x12H\n" +
+	"\aPublish\x12\x1b.quash_proto.PublishRequest\x1a\x1c.quash_proto.PublishResponse(\x010\x01\x12H\n" +
+	"\aConsume\x12\x1b.quash_proto.ConsumeRequest\x1a\x1c.quash_proto.ConsumeResponse(\x010\x01B\"Z github.com/mddfaisal/quash/protob\x06proto3"
 
 var (
 	file_quash_proto_proto_rawDescOnce sync.Once
@@ -1062,7 +1165,7 @@ func file_quash_proto_proto_rawDescGZIP() []byte {
 	return file_quash_proto_proto_rawDescData
 }
 
-var file_quash_proto_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_quash_proto_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_quash_proto_proto_goTypes = []any{
 	(*SetKVRequest)(nil),             // 0: quash_proto.SetKVRequest
 	(*SetKVResponse)(nil),            // 1: quash_proto.SetKVResponse
@@ -1072,8 +1175,8 @@ var file_quash_proto_proto_goTypes = []any{
 	(*DeleteKVResponse)(nil),         // 5: quash_proto.DeleteKVResponse
 	(*PublishRequest)(nil),           // 6: quash_proto.PublishRequest
 	(*PublishResponse)(nil),          // 7: quash_proto.PublishResponse
-	(*SubscribeRequest)(nil),         // 8: quash_proto.SubscribeRequest
-	(*SubscribeResponse)(nil),        // 9: quash_proto.SubscribeResponse
+	(*ConsumeRequest)(nil),           // 8: quash_proto.ConsumeRequest
+	(*ConsumeResponse)(nil),          // 9: quash_proto.ConsumeResponse
 	(*QueueTopicListResponse)(nil),   // 10: quash_proto.QueueTopicListResponse
 	(*QueueMetric)(nil),              // 11: quash_proto.QueueMetric
 	(*QueueTopicMetricResponse)(nil), // 12: quash_proto.QueueTopicMetricResponse
@@ -1085,12 +1188,14 @@ var file_quash_proto_proto_goTypes = []any{
 	(*RemoveTopicResponse)(nil),      // 18: quash_proto.RemoveTopicResponse
 	(*AddSubscriberRequest)(nil),     // 19: quash_proto.AddSubscriberRequest
 	(*AddSubscriberResponse)(nil),    // 20: quash_proto.AddSubscriberResponse
-	nil,                              // 21: quash_proto.QueueMetric.QueueMetricEntry
-	nil,                              // 22: quash_proto.QueueTopicMetricResponse.QueueMetricEntry
+	(*RemoveSubscriberRequest)(nil),  // 21: quash_proto.RemoveSubscriberRequest
+	(*RemoveSubscriberResponse)(nil), // 22: quash_proto.RemoveSubscriberResponse
+	nil,                              // 23: quash_proto.QueueMetric.QueueMetricEntry
+	nil,                              // 24: quash_proto.QueueTopicMetricResponse.QueueMetricEntry
 }
 var file_quash_proto_proto_depIdxs = []int32{
-	21, // 0: quash_proto.QueueMetric.queue_metric:type_name -> quash_proto.QueueMetric.QueueMetricEntry
-	22, // 1: quash_proto.QueueTopicMetricResponse.queue_metric:type_name -> quash_proto.QueueTopicMetricResponse.QueueMetricEntry
+	23, // 0: quash_proto.QueueMetric.queue_metric:type_name -> quash_proto.QueueMetric.QueueMetricEntry
+	24, // 1: quash_proto.QueueTopicMetricResponse.queue_metric:type_name -> quash_proto.QueueTopicMetricResponse.QueueMetricEntry
 	11, // 2: quash_proto.QueueTopicMetricResponse.QueueMetricEntry.value:type_name -> quash_proto.QueueMetric
 	0,  // 3: quash_proto.QuashService.SetKV:input_type -> quash_proto.SetKVRequest
 	2,  // 4: quash_proto.QuashService.GetKV:input_type -> quash_proto.GetKVRequest
@@ -1098,18 +1203,20 @@ var file_quash_proto_proto_depIdxs = []int32{
 	15, // 6: quash_proto.QuashService.CreateTopic:input_type -> quash_proto.CreateTopicRequest
 	17, // 7: quash_proto.QuashService.RemoveTopic:input_type -> quash_proto.RemoveTopicRequest
 	19, // 8: quash_proto.QuashService.AddSubscriber:input_type -> quash_proto.AddSubscriberRequest
-	6,  // 9: quash_proto.QuashService.Publish:input_type -> quash_proto.PublishRequest
-	8,  // 10: quash_proto.QuashService.Subscribe:input_type -> quash_proto.SubscribeRequest
-	1,  // 11: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
-	3,  // 12: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
-	5,  // 13: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
-	16, // 14: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
-	18, // 15: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
-	20, // 16: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
-	7,  // 17: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
-	9,  // 18: quash_proto.QuashService.Subscribe:output_type -> quash_proto.SubscribeResponse
-	11, // [11:19] is the sub-list for method output_type
-	3,  // [3:11] is the sub-list for method input_type
+	21, // 9: quash_proto.QuashService.RemoveSubscriber:input_type -> quash_proto.RemoveSubscriberRequest
+	6,  // 10: quash_proto.QuashService.Publish:input_type -> quash_proto.PublishRequest
+	8,  // 11: quash_proto.QuashService.Consume:input_type -> quash_proto.ConsumeRequest
+	1,  // 12: quash_proto.QuashService.SetKV:output_type -> quash_proto.SetKVResponse
+	3,  // 13: quash_proto.QuashService.GetKV:output_type -> quash_proto.GetKVResponse
+	5,  // 14: quash_proto.QuashService.DeleteKV:output_type -> quash_proto.DeleteKVResponse
+	16, // 15: quash_proto.QuashService.CreateTopic:output_type -> quash_proto.CreateTopicResponse
+	18, // 16: quash_proto.QuashService.RemoveTopic:output_type -> quash_proto.RemoveTopicResponse
+	20, // 17: quash_proto.QuashService.AddSubscriber:output_type -> quash_proto.AddSubscriberResponse
+	22, // 18: quash_proto.QuashService.RemoveSubscriber:output_type -> quash_proto.RemoveSubscriberResponse
+	7,  // 19: quash_proto.QuashService.Publish:output_type -> quash_proto.PublishResponse
+	9,  // 20: quash_proto.QuashService.Consume:output_type -> quash_proto.ConsumeResponse
+	12, // [12:21] is the sub-list for method output_type
+	3,  // [3:12] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1126,7 +1233,7 @@ func file_quash_proto_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quash_proto_proto_rawDesc), len(file_quash_proto_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

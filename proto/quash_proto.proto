@@ -40,12 +40,12 @@ message PublishResponse {
     string response = 1; 
 }
 
-message SubscribeRequest {
+message ConsumeRequest {
     string topic_name = 1;
     string subscriber_id = 2;
 }
 
-message SubscribeResponse {
+message ConsumeResponse {
     string response = 1;
 }
 
@@ -90,6 +90,15 @@ message AddSubscriberResponse{
     string subscriber_id = 2;
 }
 
+message RemoveSubscriberRequest{
+    string topic_name = 1;
+    string subscriber_id = 2;
+}
+
+message RemoveSubscriberResponse{
+    string response = 1;
+}
+
 service QuashService {
 
     rpc SetKV (SetKVRequest) returns (SetKVResponse);
@@ -99,7 +108,8 @@ service QuashService {
     rpc CreateTopic(CreateTopicRequest) returns (CreateTopicResponse);
     rpc RemoveTopic(RemoveTopicRequest) returns (RemoveTopicResponse);
     rpc AddSubscriber(AddSubscriberRequest) returns (AddSubscriberResponse);
+    rpc RemoveSubscriber(RemoveSubscriberRequest) returns (RemoveSubscriberResponse);
 
     rpc Publish(stream PublishRequest) returns (stream PublishResponse);
-    rpc Subscribe(stream SubscribeRequest) returns (stream SubscribeResponse);
+    rpc Consume(stream ConsumeRequest) returns (stream ConsumeResponse);
 }
