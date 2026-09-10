@@ -303,10 +303,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	for {
-		srvData := structs.SrvData{
-			KVMapLength: quashserver.GetKVMapLength(),
-			Brokers:     quashserver.GetBrokers(),
-		}
+		srvData := quashserver.Snapshot()
 		resp := structs.AdminResponse{
 			QueueMetric: srvData,
 		}

@@ -15,10 +15,6 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-// How many unread messages we'll buffer per subscriber before Publish
-// starts dropping messages for that subscriber instead of blocking.
-const subscriberBufferSize = 64
-
 var (
 	// Split from a single global lock: kvLock guards kvMap, brokersLock
 	// guards the topic/subscriber map. No RPC ever needs to hold both at
@@ -37,16 +33,35 @@ var (
 	brokers = map[structs.Topic]map[structs.SubscriptionID]chan string{}
 )
 
-func GetKVMapLength() int64 {
+// BUG FIX: GetKVMapLength/GetBrokers used to return the live kvMap /
+// brokers map by reference *after* releasing the lock that was
+// protecting it. Any caller ranging over that returned map (e.g. to
+// json.Marshal it) was doing so completely unprotected while Publish,
+// AddSubscriber, CreateTopic, etc. concurrently wrote to the real map
+// under brokersLock — a textbook "concurrent map iteration and map
+// write" fatal error. Snapshot() replaces both: it builds a brand new,
+// independent map while holding each lock, so what it returns is a
+// point-in-time copy that's safe to read (or marshal) with no lock at
+// all afterward.
+func Snapshot() structs.SrvData {
 	kvLock.Lock()
-	defer kvLock.Unlock()
-	return int64(len(kvMap))
-}
+	kvLen := int64(len(kvMap))
+	kvLock.Unlock()
 
-func GetBrokers() map[structs.Topic]map[structs.SubscriptionID]chan string {
 	brokersLock.Lock()
-	defer brokersLock.Unlock()
-	return brokers
+	topics := make(map[string]map[string]int64, len(brokers))
+	for name, subs := range brokers {
+		topics[string(name)] = make(map[string]int64)
+		for subscriber, ch := range subs {
+			topics[string(name)][string(subscriber)] = int64(len(ch))
+		}
+	}
+	brokersLock.Unlock()
+
+	return structs.SrvData{
+		KVMapLength: kvLen,
+		Topics:      topics,
+	}
 }
 
 type Server struct {
@@ -128,7 +143,7 @@ func (s *Server) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest
 		return nil, errors.New("topic does not exist")
 	}
 	id := utils.SubscriptionID()
-	subs[structs.SubscriptionID(id)] = make(chan string, subscriberBufferSize)
+	subs[structs.SubscriptionID(id)] = make(chan string, utils.SubscriberBufferSize)
 	log.Printf("AddSubscriber, Topic Name=%v, Subscriber ID=%v\n", req.TopicName, id)
 	return &pb.AddSubscriberResponse{
 		Response:     "Subscriber added",
@@ -228,43 +243,6 @@ func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, 
 			}
 		case <-stream.Context().Done():
 			return stream.Context().Err()
-		}
-	}
-}
-
-func (s *Server) QueryTopicList(ctx context.Context, q *pb.QueryTopicListRequest) (*pb.QueueTopicListResponse, error) {
-	brokersLock.Lock()
-	defer brokersLock.Unlock()
-	list := []string{}
-	for k := range brokers {
-		list = append(list, string(k))
-	}
-	return &pb.QueueTopicListResponse{TopicList: list}, nil
-}
-
-func (s *Server) QueryTopicMetric(q *pb.QueryTopicMetricRequest, stream grpc.ServerStreamingServer[pb.QueueTopicMetricResponse]) error {
-	for {
-		brokersLock.Lock()
-		queueMetric := make(map[string]*pb.QueueMetric, len(brokers))
-		for name, subs := range brokers {
-			queueMetric[string(name)] = &pb.QueueMetric{
-				QueueMetric: map[string]int64{
-					"subscriber_count": int64(len(subs)),
-				},
-			}
-		}
-		brokersLock.Unlock()
-
-		if err := stream.Send(&pb.QueueTopicMetricResponse{
-			QueueMetric: queueMetric,
-		}); err != nil {
-			return err
-		}
-
-		select {
-		case <-stream.Context().Done():
-			return stream.Context().Err()
-		case <-time.After(500 * time.Millisecond):
 		}
 	}
 }

@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	QuashDb        = "0.0.0.0:6300"
-	QuashTelemetry = ":6301"
+	QuashDb              = "0.0.0.0:6300"
+	QuashTelemetry       = ":6301"
+	SubscriberBufferSize = 64
 )
 
 func SubscriptionID() string {
