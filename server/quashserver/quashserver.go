@@ -193,51 +193,49 @@ func (s *Server) Publish(stream grpc.BidiStreamingServer[pb.PublishRequest, pb.P
 }
 
 func (s *Server) Subscribe(stream grpc.BidiStreamingServer[pb.SubscribeRequest, pb.SubscribeResponse]) error {
-	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
+	// REDESIGN: this used to require one client Recv/Send round trip per
+	// delivered message — the client had to keep re-sending its
+	// subscriber_id just to get the next value, which isn't how pub/sub
+	// is supposed to work. Now the client sends its topic/subscriber_id
+	// exactly once as a handshake; everything after that is the server
+	// pushing values as they're published, with no further input needed
+	// from the client.
+	req, err := stream.Recv()
+	if err == io.EOF {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
 
-		brokersLock.Lock()
-		subs, ok := brokers[structs.Topic(req.TopicName)]
-		if !ok {
-			brokersLock.Unlock()
-			if err := stream.Send(&pb.SubscribeResponse{
-				Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
-			}); err != nil {
-				return err
-			}
-			continue
-		}
-		ch, ok := subs[structs.SubscriptionID(req.SubscriberId)]
+	brokersLock.Lock()
+	subs, ok := brokers[structs.Topic(req.TopicName)]
+	if !ok {
 		brokersLock.Unlock()
-		if !ok {
-			if err := stream.Send(&pb.SubscribeResponse{
-				Response: fmt.Sprintf("subscriber %q not found on topic %q", req.SubscriberId, req.TopicName),
-			}); err != nil {
-				return err
-			}
-			continue
-		}
+		return stream.Send(&pb.SubscribeResponse{
+			Response: fmt.Sprintf("topic %q does not exist", req.TopicName),
+		})
+	}
+	ch, ok := subs[structs.SubscriptionID(req.SubscriberId)]
+	brokersLock.Unlock()
+	if !ok {
+		return stream.Send(&pb.SubscribeResponse{
+			Response: fmt.Sprintf("subscriber %q not found on topic %q", req.SubscriberId, req.TopicName),
+		})
+	}
 
+	log.Printf("Subscribe, Topic Name=%v, Subscriber=%v\n", req.TopicName, req.SubscriberId)
+	for {
 		// Blocks here with no CPU usage until Publish sends a value, the
 		// topic is removed (channel closed), or the client disconnects —
-		// no lock held, no polling.
+		// no lock held, no polling, no re-request needed.
 		select {
 		case value, open := <-ch:
 			if !open {
-				if err := stream.Send(&pb.SubscribeResponse{
+				return stream.Send(&pb.SubscribeResponse{
 					Response: fmt.Sprintf("topic %q was removed", req.TopicName),
-				}); err != nil {
-					return err
-				}
-				continue
+				})
 			}
-			log.Printf("Subscribe, Topic Name=%v, Subscriber=%v\n", req.TopicName, req.SubscriberId)
 			if err := stream.Send(&pb.SubscribeResponse{Response: value}); err != nil {
 				return err
 			}
